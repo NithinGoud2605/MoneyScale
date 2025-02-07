@@ -1,6 +1,6 @@
 // controllers/authController.js
 const User = require("../models/User");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs"); // Updated to use bcryptjs
 const jwt = require("jsonwebtoken");
 
 // Register User
@@ -17,9 +17,9 @@ exports.registerUser = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user (note the renamed field)
+    // Create new user
     await User.create({
-      username,       // formerly userId
+      username,  // formerly userId
       email,
       password: hashedPassword,
     });
@@ -49,7 +49,6 @@ exports.loginUser = async (req, res) => {
     }
 
     // Generate JWT
-    // Notice we put user.id (the UUID PK) in the token payload
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
