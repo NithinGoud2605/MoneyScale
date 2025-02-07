@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api"; // Proxy is set in package.json
+// Use the Vite environment variable; if not defined, fallback to localhost (development)
+const API_URL = "https://moneyscale.onrender.com/api" || "http://localhost:5000/api";
 
 export const getAccounts = async (token) => {
   try {

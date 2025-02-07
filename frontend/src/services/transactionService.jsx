@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api"; // Proxy is set in package.json
+const API_URL = "https://moneyscale.onrender.com/api" || "http://localhost:5000/api";
 
 export const getTransactions = async (token) => {
   try {
