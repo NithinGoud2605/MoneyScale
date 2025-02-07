@@ -1,7 +1,7 @@
 const express = require("express");
 const {
   createBudget,
-  getBudgets, // Updated to fetch multiple budgets
+  getBudgets,
   updateBudget,
   deleteBudget,
 } = require("../controllers/budgetController");
