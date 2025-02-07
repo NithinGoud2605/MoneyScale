@@ -1,0 +1,219 @@
+/* ============================= */
+/* ✅ Global Resets & Transitions */
+/* ============================= */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#root {
+  margin: 0 auto;
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================= */
+/* ✅ Sidebar                    */
+/* ============================= */
+.sidebar {
+  width: 16rem; /* ~256px */
+  background: #f8fafc; /* light: Tailwind slate-50 */
+  min-height: 100vh;
+  padding: 1rem;
+  transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+[data-theme="dark"] .sidebar {
+  background: #1f2937; /* dark: Tailwind gray-800 */
+  color: #e5e7eb;      /* Tailwind gray-200 */
+}
+
+.sidebar a {
+  display: block;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.3s, transform 0.2s ease;
+  border-radius: 0.375rem; /* rounded-md */
+}
+
+.sidebar a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+/* ============================= */
+/* ✅ Dashboard Container        */
+/* ============================= */
+.dashboard-container {
+  margin-left: 16rem; /* Align with sidebar width */
+  transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+[data-theme="dark"] .dashboard-container {
+  background: #111827; /* dark: Tailwind gray-900 */
+  color: #f3f4f6;      /* Tailwind gray-200 */
+}
+
+/* ============================= */
+/* ✅ Buttons                    */
+/* ============================= */
+.button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s, transform 0.2s ease;
+  outline: none;
+  border: none;
+  cursor: pointer;
+}
+
+[data-theme="light"] .button {
+  background: #14b8a6; /* teal-500 */
+  color: #ffffff;
+}
+
+[data-theme="dark"] .button {
+  background: #10b981; /* emerald-500 */
+  color: #f9fafb;
+}
+
+.button:hover {
+  transform: scale(1.04);
+}
+
+/* ============================= */
+/* ✅ Animations                 */
+/* ============================= */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* ============================= */
+/* ✅ Cards                      */
+/* ============================= */
+.card {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 300ms, box-shadow 300ms;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] .card {
+  background-color: #1f2937;
+  color: #e2e8f0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================= */
+/* ✅ Navbar & Footer            */
+/* ============================= */
+.navbar {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+[data-theme="light"] .navbar {
+  background-color: #f8fafc;
+  color: #1f2937;
+}
+
+[data-theme="dark"] .navbar {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+footer {
+  padding: 1rem 2rem;
+  text-align: center;
+  border-top: 1px solid #e5e7eb;
+  transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+  margin-top: auto;
+}
+
+[data-theme="light"] footer {
+  background-color: #f8fafc;
+  color: #1f2937;
+}
+
+[data-theme="dark"] footer {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+/* ============================= */
+/* ✅ Theme Toggle Button        */
+/* ============================= */
+.ui-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #e5e7eb;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.ui-toggle__btn:hover {
+  background: #cbd5e1;
+  transform: scale(1.05);
+}
+
+/* ============================= */
+/* ✅ Tailwind Base, Components,  */
+/*     Utilities (if used)        */
+/* ============================= */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
