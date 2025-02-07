@@ -1,17 +1,18 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const { sequelize } = require("./models");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => res.send("API is running!"));
+app.get("/api", (req, res) => res.send("API is running!"));
 
-const authRoutes = require("./routes/authRoutes"); // Correct path to routes
-app.use("/api/auth", authRoutes); // Mount routes on /api/auth
-
+// Mount your API routes
+const authRoutes = require("./routes/authRoutes");
+app.use("/api/auth", authRoutes);
 
 const accountRoutes = require("./routes/accountRoutes");
 app.use("/api/accounts", accountRoutes);
@@ -21,6 +22,15 @@ const budgetRoutes = require("./routes/budgetRoutes");
 
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/budgets", budgetRoutes);
+
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "frontend", "dist")));
+  
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+  });
+}
 
 // Sync database models
 sequelize
@@ -32,7 +42,7 @@ sequelize
   });
 
 sequelize
-  .sync({ alter: true }) // Change to { alter: true } in production
+  .sync({ alter: true })
   .then(() => console.log("Database models synced"))
   .catch((err) => console.error("Error syncing database models:", err));
 
