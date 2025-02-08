@@ -18,23 +18,21 @@ const Footer = () => {
     <footer
       ref={footerRef}
       className={`
-        py-6 px-4 text-center border-t transition-colors mt-auto
+        w-full mt-auto border-t
         ${theme === "light"
           ? "bg-slate-50 text-slate-800 border-slate-200"
-          : "bg-slate-800 text-slate-200 border-slate-700"
-        }
+          : "bg-slate-800 text-slate-200 border-slate-700"}
       `}
     >
-      <p className="text-sm font-medium">
-        © {new Date().getFullYear()}{" "}
-        <span className="
-          bg-gradient-to-r from-teal-500 to-emerald-500
-          text-transparent bg-clip-text font-bold
-        ">
-          MoneyScale
-        </span>
-        . All rights reserved.
-      </p>
+      <div className="container mx-auto px-4 py-4 md:py-6">
+        <p className="text-xs sm:text-sm font-medium text-center">
+          © {new Date().getFullYear()}{" "}
+          <span className="bg-gradient-to-r from-teal-500 to-emerald-500 text-transparent bg-clip-text font-bold">
+            MoneyScale
+          </span>
+          . All rights reserved.
+        </p>
+      </div>
     </footer>
   );
 };

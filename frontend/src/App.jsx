@@ -1,10 +1,9 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Sidebar from "./components/Sidebar";
-import Topbar from "./components/Topbar";
+import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./sections/Home";
-import Overview from "./sections/Overview"; // Overview now includes budget editing
+import Overview from "./sections/Overview";
 import Login from "./sections/Login";
 import Register from "./sections/Register";
 import Accounts from "./sections/Accounts";
@@ -14,21 +13,22 @@ import { ThemeProvider } from "./theme/ThemeProvider";
 
 const App = () => {
   return (
-    // Wrap the entire app with our ThemeProvider so that theme toggling works
     <ThemeProvider>
       <Router>
-        <div className="flex flex-row min-h-screen" id="appRoot">
-          {/* Sidebar with navigation links */}
-          <Sidebar />
+        <div className="min-h-screen flex flex-col">
+          {/* Top Navigation (visible on all pages) */}
+          <Navbar />
 
-          {/* Main content container */}
-          <div className="flex flex-col w-full transition-colors">
-            <Topbar />
-            <main className="flex-grow pt-4 pb-6 px-4 md:px-8 dashboard-container">
+          {/* Main Content Area */}
+          <main className="flex-grow">
+            <Suspense fallback={<div className="text-center m-4">Loading...</div>}>
               <Routes>
+                {/* Public Routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+
+                {/* Protected Routes */}
                 <Route
                   path="/overview"
                   element={
@@ -54,9 +54,11 @@ const App = () => {
                   }
                 />
               </Routes>
-            </main>
-            <Footer />
-          </div>
+            </Suspense>
+          </main>
+
+          {/* Footer (visible on all pages) */}
+          <Footer />
         </div>
       </Router>
     </ThemeProvider>

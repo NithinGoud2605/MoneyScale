@@ -23,11 +23,9 @@ const Topbar = () => {
     navigate("/login");
   };
 
-  // Helper function to get display name with first letter capitalized
+  // Helper function: capitalize the first letter of the username or email prefix.
   const getDisplayName = (user) => {
     if (!user) return "";
-    // If the user object has a "username" property, use it.
-    // Otherwise, use the part of the email before "@".
     const name = user.username ? user.username : user.email.split("@")[0];
     return name.charAt(0).toUpperCase() + name.slice(1);
   };
@@ -36,41 +34,47 @@ const Topbar = () => {
     <div
       ref={topbarRef}
       className={`
-        navbar flex items-center justify-between px-4 py-3
-        border-b transition-colors
+        navbar sticky top-0 z-50 flex flex-wrap items-center justify-between
+        px-4 py-3 md:px-8 border-b transition-colors duration-300 shadow-sm
         ${theme === "light"
           ? "bg-slate-50 border-slate-200 text-slate-800"
           : "bg-slate-800 border-slate-700 text-slate-200"
         }
       `}
     >
-      {/* Left side: App name or greeting */}
-      <div className="text-lg font-bold">
-        {user ? (
-          <span className="bg-gradient-to-r from-teal-500 to-emerald-500 text-transparent bg-clip-text">
-            Hello, {getDisplayName(user)}
-          </span>
-        ) : (
-          "MoneyScale"
-        )}
+      {/* Left Side: Greeting or App Name */}
+      <div className="flex items-center space-x-2">
+        <div className="text-base sm:text-lg md:text-xl font-bold">
+          {user ? (
+            <span className="bg-gradient-to-r from-teal-500 to-emerald-500 text-transparent bg-clip-text">
+              Hello, {getDisplayName(user)}
+            </span>
+          ) : (
+            "MoneyScale"
+          )}
+        </div>
       </div>
 
-      {/* Right side: Theme Toggle & Logout/Login */}
-      <div className="flex items-center space-x-4">
-        <button className="ui-toggle__btn hover:scale-105" onClick={toggleTheme}>
+      {/* Right Side: Theme Toggle and Login/Logout Button */}
+      <div className="flex items-center space-x-3 mt-2 md:mt-0">
+        <button 
+          onClick={toggleTheme}
+          className="ui-toggle__btn px-3 py-1 rounded transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          aria-label="Toggle Theme"
+        >
           {theme === "light" ? "🌙 Dark" : "🌞 Light"}
         </button>
         {user ? (
           <button
-            className="button bg-red-500 hover:bg-red-600 text-white font-semibold"
             onClick={handleLogout}
+            className="button px-4 py-1 rounded bg-red-500 hover:bg-red-600 text-white font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-400"
           >
             Logout
           </button>
         ) : (
           <button
-            className="button bg-teal-500 hover:bg-teal-600 text-white font-semibold"
             onClick={() => navigate("/login")}
+            className="button px-4 py-1 rounded bg-teal-500 hover:bg-teal-600 text-white font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-teal-400"
           >
             Login
           </button>

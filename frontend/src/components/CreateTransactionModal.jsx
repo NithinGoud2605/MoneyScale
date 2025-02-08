@@ -1,7 +1,8 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import { createTransaction } from "../services/transactionService";
 import { updateAccount } from "../services/accountService";
 import { AuthContext } from "../context/AuthContext";
+import gsap from "gsap";
 
 const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
   const { token } = useContext(AuthContext);
@@ -14,6 +15,19 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
   const [accountId, setAccountId] = useState("");
   const [error, setError] = useState("");
 
+  const modalRef = useRef(null);
+
+  // Animate modal on open using GSAP
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      gsap.fromTo(
+        modalRef.current,
+        { opacity: 0, scale: 0.9 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }
+      );
+    }
+  }, [isOpen]);
+
   const handleCreateTransaction = async () => {
     if (!amount || isNaN(amount) || Number(amount) <= 0) {
       setError("Amount must be a positive number.");
@@ -25,7 +39,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
     }
 
     try {
-      // Adjust the account balance
+      // Adjust the account balance before creating the transaction
       const selectedAcc = accounts.find((acc) => acc.id === accountId);
       if (!selectedAcc) {
         setError("Invalid account selected.");
@@ -38,7 +52,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
         newBalance -= parseFloat(amount);
       }
 
-      // Update the account
+      // Update the account balance
       await updateAccount(token, accountId, { balance: newBalance });
 
       // Create the transaction
@@ -51,7 +65,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
         accountId,
       });
 
-      // Reset & Close
+      // Reset the form and close modal
       setIsOpen(false);
       setType("EXPENSE");
       setAmount("");
@@ -61,10 +75,10 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
       setAccountId("");
       setError("");
       onSuccess && onSuccess();
-    } catch (error) {
-      console.error("Error creating transaction:", error);
+    } catch (err) {
+      console.error("Error creating transaction:", err);
       setError(
-        error.response?.data?.message ||
+        err.response?.data?.message ||
           "An error occurred while creating the transaction."
       );
     }
@@ -73,10 +87,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
   return (
     <>
       <button
-        className="
-          bg-teal-500 text-white py-2 px-4 rounded
-          hover:bg-teal-600 transition-colors
-        "
+        className="bg-teal-500 text-white py-2 px-4 rounded hover:bg-teal-600 transition-colors"
         onClick={() => setIsOpen(true)}
       >
         Create Transaction
@@ -84,154 +95,134 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
 
       {isOpen && (
         <div
-          className="
-            fixed inset-0 bg-black bg-opacity-50
-            flex items-center justify-center z-50
-          "
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+          role="dialog"
+          aria-modal="true"
         >
-          <div className="
-            bg-white dark:bg-slate-800 p-6 rounded shadow-lg
-            w-11/12 md:w-1/3
-          ">
-            <h2 className="text-xl font-bold mb-4">Create New Transaction</h2>
-            {error && <p className="text-red-500 mb-4">{error}</p>}
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Type</label>
-              <select
-                className="
-                  w-full p-2 border rounded
-                  dark:bg-slate-700 dark:border-slate-600
-                  dark:text-slate-200
-                  focus:outline-none focus:ring-2 focus:ring-teal-500
-                  border-slate-300
-                "
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              >
-                <option value="INCOME">Income</option>
-                <option value="EXPENSE">Expense</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Amount</label>
-              <input
-                type="number"
-                className="
-                  w-full p-2 border rounded
-                  dark:bg-slate-700 dark:border-slate-600
-                  dark:text-slate-200
-                  focus:outline-none focus:ring-2 focus:ring-teal-500
-                  border-slate-300
-                "
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Description</label>
-              <input
-                type="text"
-                className="
-                  w-full p-2 border rounded
-                  dark:bg-slate-700 dark:border-slate-600
-                  dark:text-slate-200
-                  focus:outline-none focus:ring-2 focus:ring-teal-500
-                  border-slate-300
-                "
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Optional"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Date</label>
-              <input
-                type="date"
-                className="
-                  w-full p-2 border rounded
-                  dark:bg-slate-700 dark:border-slate-600
-                  dark:text-slate-200
-                  focus:outline-none focus:ring-2 focus:ring-teal-500
-                  border-slate-300
-                "
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Category</label>
-              <input
-                type="text"
-                className="
-                  w-full p-2 border rounded
-                  dark:bg-slate-700 dark:border-slate-600
-                  dark:text-slate-200
-                  focus:outline-none focus:ring-2 focus:ring-teal-500
-                  border-slate-300
-                "
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="e.g. Groceries"
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium">Account</label>
-              <select
-                className="
-                  w-full p-2 border rounded
-                  dark:bg-slate-700 dark:border-slate-600
-                  dark:text-slate-200
-                  focus:outline-none focus:ring-2 focus:ring-teal-500
-                  border-slate-300
-                "
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                required
-              >
-                <option value="" disabled>
-                  Select an Account
-                </option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name} - ${account.balance}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex justify-end space-x-4">
+          <div
+            ref={modalRef}
+            className="bg-white dark:bg-slate-800 p-6 rounded shadow-xl w-full max-w-md max-h-full overflow-y-auto"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Create New Transaction</h2>
               <button
-                className="
-                  py-2 px-4 bg-slate-300 dark:bg-slate-700
-                  rounded hover:bg-slate-400 dark:hover:bg-slate-600
-                "
                 onClick={() => {
                   setIsOpen(false);
                   setError("");
                 }}
+                className="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100"
+                aria-label="Close modal"
               >
-                Cancel
+                &times;
               </button>
-              <button
-                className="
-                  py-2 px-4 bg-teal-500 text-white rounded
-                  hover:bg-teal-600 transition-colors
-                "
-                onClick={handleCreateTransaction}
-              >
-                Create
-              </button>
+            </div>
+            {error && <p className="text-red-500 mb-4">{error}</p>}
+
+            <div className="space-y-4">
+              {/* Transaction Type */}
+              <div>
+                <label className="block text-sm font-medium">Type</label>
+                <select
+                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                >
+                  <option value="INCOME">Income</option>
+                  <option value="EXPENSE">Expense</option>
+                </select>
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="block text-sm font-medium">Amount</label>
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium">Description</label>
+                <input
+                  type="text"
+                  placeholder="Optional"
+                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium">Date</label>
+                <input
+                  type="date"
+                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium">Category</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Groceries"
+                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Account Selection */}
+              <div>
+                <label className="block text-sm font-medium">Account</label>
+                <select
+                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>
+                    Select an Account
+                  </option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name} - ${account.balance}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setError("");
+                  }}
+                  className="py-2 px-4 bg-slate-300 dark:bg-slate-700 rounded hover:bg-slate-400 dark:hover:bg-slate-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateTransaction}
+                  className="py-2 px-4 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors"
+                >
+                  Create
+                </button>
+              </div>
             </div>
           </div>
         </div>

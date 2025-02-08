@@ -2,14 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta
+      name="description"
+      content="MoneyScale - A smart way to manage your finances."
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="MoneyScale - A smart way to manage your finances. Dashboard with insights, analytics, and predictions." />
     <title>MoneyScale</title>
-
+    
     <!-- Favicon -->
     <link rel="icon" href="/logo-sm.png" sizes="any" type="image/png" />
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts (Optional) -->
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
@@ -17,6 +20,7 @@
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Your Tailwind config override (optional) -->
     <script>
       tailwind.config = {
         theme: {
@@ -29,9 +33,9 @@
       };
     </script>
   </head>
-  <body class="min-h-screen w-full bg-gray-50 font-sans m-0 p-0">
+  <body class="min-h-screen w-full bg-gray-50 font-sans">
     <!-- Root for React -->
-    <div id="root" class="w-full h-full"></div>
+    <div id="root"></div>
 
     <!-- React Application Script -->
     <script type="module" src="/src/main.jsx"></script>
