@@ -9,7 +9,7 @@ const InfoTooltip = ({ content, children }) => {
       </Tooltip.Trigger>
       <Tooltip.Portal>
         <Tooltip.Content
-          className="bg-black text-white text-xs rounded py-1 px-2"
+          className="bg-black text-white text-xs rounded py-1 px-2 shadow-md"
           side="top"
           align="center"
         >

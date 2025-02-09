@@ -48,13 +48,13 @@ const Overview = () => {
     plugins: {
       legend: {
         labels: {
-          color: theme === "light" ? "#0f172a" : "#f8fafc",
+          color: theme === "light" ? "#1e293b" : "#f8fafc", // slate-800 for light mode
           font: { family: "Inter, sans-serif", size: 14 },
         },
       },
       tooltip: {
         backgroundColor: theme === "light" ? "#ffffff" : "#1e293b",
-        titleColor: theme === "light" ? "#0f172a" : "#f8fafc",
+        titleColor: theme === "light" ? "#1e293b" : "#f8fafc",
         bodyColor: theme === "light" ? "#475569" : "#cbd5e1",
         borderColor: theme === "light" ? "#e2e8f0" : "#334155",
         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
@@ -63,11 +63,11 @@ const Overview = () => {
     scales: {
       x: {
         grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
-        ticks: { color: theme === "light" ? "#64748b" : "#94a3b8" },
+        ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
       },
       y: {
         grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
-        ticks: { color: theme === "light" ? "#64748b" : "#94a3b8" },
+        ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
       },
     },
   });
@@ -285,7 +285,7 @@ const Overview = () => {
     <div
       className={`p-6 min-h-screen transition-colors duration-300 ${
         theme === "light"
-          ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900"
+          ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-slate-800"
           : "bg-gradient-to-br from-gray-900 to-blue-900 text-gray-100"
       }`}
     >
@@ -314,7 +314,7 @@ const Overview = () => {
       <div className="flex flex-wrap items-center mb-8 gap-6 justify-center">
         {/* Account Selection */}
         <div className="glass-container p-4 rounded-2xl shadow-2xl">
-          <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+          <label className="block mb-2 font-semibold text-slate-900 dark:text-gray-100">
             Select an Account
           </label>
           <select
@@ -347,7 +347,7 @@ const Overview = () => {
           <CreateTransactionModal
             accounts={accounts}
             onSuccess={fetchData}
-            className="px-6 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-6 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
           />
         </div>
       </div>
@@ -363,11 +363,11 @@ const Overview = () => {
               <h2 className="text-xl font-bold mb-4 text-cyan-400">Monthly Budget Tracker</h2>
               {budget ? (
                 <>
-                  <p className="mb-2 text-gray-700 dark:text-gray-300">
+                  <p className="mb-2 text-slate-700 dark:text-gray-300">
                     <span className="font-semibold">Budget:</span>{" "}
                     <span className="text-blue-600">{`$${budget.amount}`}</span>
                   </p>
-                  <p className="mb-2 text-gray-700 dark:text-gray-300">
+                  <p className="mb-2 text-slate-700 dark:text-gray-300">
                     <span className="font-semibold">Spent (This Month):</span>{" "}
                     <span className="text-red-500">{`$${monthlyExpense.toFixed(2)}`}</span>
                   </p>
@@ -390,7 +390,7 @@ const Overview = () => {
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
                       aria-label="Update Budget"
                     >
                       Update
@@ -407,7 +407,7 @@ const Overview = () => {
                 </>
               ) : (
                 <form onSubmit={handleBudgetCreate} className="space-y-3">
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-slate-700 dark:text-gray-300">
                     No budget set yet. Create one below:
                   </p>
                   <div className="flex flex-wrap gap-3 items-center">
@@ -422,7 +422,7 @@ const Overview = () => {
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
                       aria-label="Create Budget"
                     >
                       Create Budget
@@ -468,7 +468,7 @@ const Overview = () => {
                         Delete
                       </button>
                     </div>
-                    <div className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+                    <div className="text-sm text-slate-700 dark:text-gray-300 mt-2">
                       {new Date(tx.date).toLocaleDateString()} | {tx.category} | {tx.description}
                     </div>
                   </div>

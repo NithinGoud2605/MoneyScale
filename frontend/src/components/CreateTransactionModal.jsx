@@ -29,6 +29,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
   }, [isOpen]);
 
   const handleCreateTransaction = async () => {
+    // Validate input values
     if (!amount || isNaN(amount) || Number(amount) <= 0) {
       setError("Amount must be a positive number.");
       return;
@@ -39,13 +40,15 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
     }
 
     try {
-      // Adjust the account balance before creating the transaction
+      // Find the selected account
       const selectedAcc = accounts.find((acc) => acc.id === accountId);
       if (!selectedAcc) {
         setError("Invalid account selected.");
         return;
       }
-      let newBalance = selectedAcc.balance;
+      
+      // Convert the account balance to a number before doing any arithmetic.
+      let newBalance = parseFloat(selectedAcc.balance);
       if (type === "INCOME") {
         newBalance += parseFloat(amount);
       } else {
@@ -65,7 +68,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
         accountId,
       });
 
-      // Reset the form and close modal
+      // Reset the form, close modal, and trigger onSuccess callback
       setIsOpen(false);
       setType("EXPENSE");
       setAmount("");
@@ -87,7 +90,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
   return (
     <>
       <button
-        className="bg-teal-500 text-white py-2 px-4 rounded hover:bg-teal-600 transition-colors"
+        className="px-6 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
         onClick={() => setIsOpen(true)}
       >
         Create Transaction
@@ -101,7 +104,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
         >
           <div
             ref={modalRef}
-            className="bg-white dark:bg-slate-800 p-6 rounded shadow-xl w-full max-w-md max-h-full overflow-y-auto"
+            className="glass-container p-6 rounded-2xl shadow-xl w-full max-w-md max-h-full overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Create New Transaction</h2>
@@ -110,7 +113,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                   setIsOpen(false);
                   setError("");
                 }}
-                className="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100"
+                className="text-gray-500 hover:text-gray-700 transition-colors"
                 aria-label="Close modal"
               >
                 &times;
@@ -123,7 +126,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
               <div>
                 <label className="block text-sm font-medium">Type</label>
                 <select
-                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  className="w-full p-2 glass-input rounded border focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   value={type}
                   onChange={(e) => setType(e.target.value)}
                 >
@@ -138,7 +141,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                 <input
                   type="number"
                   placeholder="0.00"
-                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  className="w-full p-2 glass-input rounded border focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   min="0"
@@ -152,7 +155,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                 <input
                   type="text"
                   placeholder="Optional"
-                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  className="w-full p-2 glass-input rounded border focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
@@ -163,7 +166,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                 <label className="block text-sm font-medium">Date</label>
                 <input
                   type="date"
-                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  className="w-full p-2 glass-input rounded border focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   required
@@ -176,7 +179,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                 <input
                   type="text"
                   placeholder="e.g. Groceries"
-                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  className="w-full p-2 glass-input rounded border focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   required
@@ -187,7 +190,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
               <div>
                 <label className="block text-sm font-medium">Account</label>
                 <select
-                  className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
+                  className="w-full p-2 glass-input rounded border focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   value={accountId}
                   onChange={(e) => setAccountId(e.target.value)}
                   required
@@ -211,14 +214,14 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                     setIsOpen(false);
                     setError("");
                   }}
-                  className="py-2 px-4 bg-slate-300 dark:bg-slate-700 rounded hover:bg-slate-400 dark:hover:bg-slate-600 transition-colors"
+                  className="py-2 px-4 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleCreateTransaction}
-                  className="py-2 px-4 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors"
+                  className="py-2 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded hover:from-cyan-600 hover:to-blue-700 transition-colors"
                 >
                   Create
                 </button>

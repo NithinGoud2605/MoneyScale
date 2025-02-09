@@ -108,7 +108,7 @@ const Accounts = () => {
           </h2>
           <div className="glass-container p-4 rounded-2xl">
             <div className={`text-xl font-semibold ${theme === "light" ? "total-assets-light" : "total-assets-dark"}`}>
-              Total Assets:{" "}
+              Total Balance:{" "}
               <span className={`text-2xl ${theme === "light" ? "total-assets-value-light" : "total-assets-value-dark"}`}>
                 ${totalBalance}
               </span>
@@ -133,7 +133,7 @@ const Accounts = () => {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
-                  <span className="input-icon">🏦</span>
+                  <span className="input-icon"></span>
                 </div>
   
                 <div className="glass-input-container">
@@ -145,7 +145,7 @@ const Accounts = () => {
                     <option value="CURRENT">Current Account</option>
                     <option value="SAVINGS">Savings Account</option>
                   </select>
-                  <span className="input-icon">📑</span>
+                  <span className="input-icon"></span>
                 </div>
   
                 <div className="glass-input-container">
@@ -156,7 +156,7 @@ const Accounts = () => {
                     value={form.balance}
                     onChange={(e) => setForm({ ...form, balance: e.target.value })}
                   />
-                  <span className="input-icon">💰</span>
+                  <span className="input-icon"></span>
                 </div>
   
                 <button

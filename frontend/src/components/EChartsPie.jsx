@@ -1,18 +1,23 @@
 import React from "react";
 import ReactECharts from "echarts-for-react";
 
-const EChartsPie = ({ data }) => {
+const EChartsPie = ({ data, theme = "light" }) => {
   const options = {
     tooltip: {
       trigger: "item",
       formatter: "{b}: ${c} ({d}%)",
+      backgroundColor: theme === "light" ? "#ffffff" : "#1e293b",
+      textStyle: {
+        color: theme === "light" ? "#1e293b" : "#f8fafc"
+      },
+      borderColor: theme === "light" ? "#e2e8f0" : "#334155"
     },
     series: [
       {
         name: "Account Balances",
         type: "pie",
         radius: "50%",
-        data: data,
+        data,
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
