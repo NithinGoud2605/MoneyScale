@@ -1,9 +1,11 @@
+// @refresh reset
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState("light");
+export function ThemeProvider({ children }) {
+  // Set default theme to dark if none is stored
+  const [theme, setTheme] = useState("dark");
 
   // Function to update CSS variables based on the current theme
   const applyTheme = (currentTheme) => {
@@ -25,9 +27,9 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
-  // On mount, read theme from localStorage (or default to light)
+  // On mount, read the theme from localStorage (or default to dark)
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "light";
+    const savedTheme = localStorage.getItem("theme") || "dark";
     setTheme(savedTheme);
     applyTheme(savedTheme);
   }, []);
@@ -44,6 +46,8 @@ export const ThemeProvider = ({ children }) => {
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
-export const useTheme = () => useContext(ThemeContext);
+export function useTheme() {
+  return useContext(ThemeContext);
+}

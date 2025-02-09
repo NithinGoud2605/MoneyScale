@@ -9,13 +9,17 @@ const Home = () => {
   const { theme } = useTheme();
 
   useEffect(() => {
+    console.log("Hero container:", heroRef.current);
+    // Temporarily disable GSAP animation to check rendering.
+    // Uncomment the code below once the button is visible.
+    /*
     const tl = gsap.timeline();
     tl.from(heroRef.current.querySelectorAll(".hero-element"), {
       duration: 0.8,
       y: 30,
       opacity: 0,
       stagger: 0.2,
-      ease: "power3.out"
+      ease: "power3.out",
     }).from(
       featuresRef.current.querySelectorAll(".feature-card"),
       {
@@ -23,32 +27,34 @@ const Home = () => {
         y: 20,
         opacity: 0,
         stagger: 0.1,
-        ease: "back.out(1.7)"
+        ease: "back.out(1.7)",
       },
       "-=0.5"
     );
+    */
   }, []);
 
   return (
     <div
       className={`min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-300 ${
         theme === "light"
-          ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900"
+          ? "bg-gradient-to-br from-white to-gray-100 text-slate-800"
           : "bg-gradient-to-br from-gray-900 to-blue-900 text-gray-100"
       }`}
     >
       <div ref={heroRef} className="max-w-4xl text-center space-y-8">
-        <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-600 hero-element">
+        <h1 className="hero-element text-5xl sm:text-6xl md:text-7xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-600">
           Take Control of Your Finances
         </h1>
-        <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 hero-element">
-          Smart budgeting, expense tracking, and financial insights - all in one beautiful platform
+        <p className="hero-element text-xl md:text-2xl text-slate-600 dark:text-gray-300">
+          Smart budgeting, expense tracking, and financial insights – all in one beautiful platform
         </p>
+        {/* Debug button style: solid red background and border */}
         <Link
           to="/register"
-          className="inline-block px-8 py-4 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full hover:opacity-90 transition-opacity shadow-xl hero-element"
+          className="hero-element inline-block px-8 py-4 text-lg font-semibold text-white rounded-full hover:opacity-90 transition-opacity shadow-xl z-10 bg-blue-500 border border-black"
         >
-          Get Started Free
+          Get Started
         </Link>
       </div>
 
@@ -73,7 +79,7 @@ const Home = () => {
             </svg>
           </div>
           <h3 className="text-2xl font-bold mb-4 text-cyan-400">Track Everything</h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-600 dark:text-gray-400">
             Monitor income, expenses, and investments across all your accounts in real-time
           </p>
         </div>
@@ -95,7 +101,7 @@ const Home = () => {
             </svg>
           </div>
           <h3 className="text-2xl font-bold mb-4 text-cyan-400">Smart Budgets</h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-600 dark:text-gray-400">
             Create custom budgets with automatic spending alerts and progress tracking
           </p>
         </div>
@@ -117,7 +123,7 @@ const Home = () => {
             </svg>
           </div>
           <h3 className="text-2xl font-bold mb-4 text-cyan-400">Powerful Insights</h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-600 dark:text-gray-400">
             Get AI-powered financial recommendations and predictive analytics
           </p>
         </div>

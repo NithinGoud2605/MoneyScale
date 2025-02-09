@@ -1,19 +1,19 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import "./index.css";
 import "./App.css";
 
+const App = lazy(() => import("./App"));
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  // Remove or comment out StrictMode if double-render is causing flicker
-  // <React.StrictMode>
-    <ThemeProvider>
-      <AuthProvider>
+  <ThemeProvider>
+    <AuthProvider>
+      <Suspense fallback={<div>Loading...</div>}>
         <App />
-      </AuthProvider>
-    </ThemeProvider>
-  // </React.StrictMode>
+      </Suspense>
+    </AuthProvider>
+  </ThemeProvider>
 );
