@@ -2,30 +2,39 @@ import React, { useState, useContext, useRef, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
+import { useTheme } from "../theme/ThemeProvider";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
-  const cardRef = useRef(null);
+  const { theme } = useTheme();
 
+  // Form field states and error message state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Animate the login card on mount
+  // Ref for the login card container to apply animations
+  const cardRef = useRef(null);
+
+  // Animate the login card on mount using GSAP
   useEffect(() => {
-    gsap.fromTo(
-      cardRef.current,
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }
-    );
+    if (cardRef.current) {
+      gsap.fromTo(
+        cardRef.current,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }
+      );
+    }
   }, []);
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
 
+    // Call the login function from AuthContext
     const success = await login(email, password);
     if (!success) {
       setErrorMsg("Invalid credentials. Please try again.");
@@ -35,62 +44,110 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 transition-colors px-4">
+    <div
+      className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${
+        theme === "light"
+          ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900"
+          : "bg-gradient-to-br from-gray-900 to-blue-900 text-gray-100"
+      }`}
+    >
       <div
         ref={cardRef}
-        className="max-w-md w-full bg-white dark:bg-slate-800 p-8 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700"
+        className="w-full max-w-md glass-container backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-border"
       >
-        <h2 className="text-3xl font-extrabold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-emerald-500">
-          Welcome Back
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4" aria-label="Login Form">
+        <div className="text-center mb-8">
+          <div className="mb-6 inline-block p-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600">
+            <svg
+              className="w-12 h-12 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
+            Welcome Back
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Sign in to manage your finances
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6" aria-label="Login Form">
           {/* Email Field */}
           <div>
-            <label htmlFor="email" className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">
-              Email
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email Address
             </label>
             <input
-              id="email"
               type="email"
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 border-slate-300"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-border focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
+
           {/* Password Field with Show/Hide Toggle */}
-          <div className="relative">
-            <label htmlFor="password" className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password
             </label>
-            <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 border-slate-300 pr-10"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400"
-            >
-              {showPassword ? (
-                // Eye Off Icon
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.03.165-2.019.474-2.955M21 21l-4.35-4.35M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-border focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all pr-12"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                <svg
+                  className="w-5 h-5 text-gray-500 dark:text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  {showPassword ? (
+                    // Eye Off Icon
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.03.165-2.019.474-2.955M21 21l-4.35-4.35M15 10a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  ) : (
+                    // Eye Icon
+                    <>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </>
+                  )}
                 </svg>
-              ) : (
-                // Eye Icon
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              )}
-            </button>
+              </button>
+            </div>
           </div>
 
           {/* Error Message */}
@@ -103,20 +160,20 @@ const Login = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white py-2 rounded transition-colors font-semibold mt-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg"
           >
-            Log In
+            Sign In
           </button>
         </form>
 
-        <p className="mt-4 text-sm text-center text-slate-600 dark:text-slate-300">
-          New user?{" "}
+        <p className="mt-6 text-center text-gray-600 dark:text-gray-400">
+          Don't have an account?{" "}
           <span
             onClick={() => navigate("/register")}
-            className="text-teal-500 cursor-pointer hover:underline font-bold"
+            className="text-cyan-500 hover:underline font-semibold cursor-pointer"
             aria-label="Go to Register Page"
           >
-            Create an account
+            Create Account
           </span>
         </p>
       </div>

@@ -3,13 +3,8 @@ import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { Chart, registerables } from "chart.js";
 import ReactECharts from "echarts-for-react";
 import { AuthContext } from "../context/AuthContext";
-import {
-  getBudgets,
-  createBudget,
-  updateBudget,
-  deleteBudget,
-} from "../services/budgetService";
-import { getTransactions } from "../services/transactionService";
+import { getBudgets, createBudget, updateBudget, deleteBudget } from "../services/budgetService";
+import { getTransactions, deleteTransaction } from "../services/transactionService";
 import { getAccounts } from "../services/accountService";
 import CreateTransactionModal from "../components/CreateTransactionModal";
 import gsap from "gsap";
@@ -37,9 +32,7 @@ const Overview = () => {
   // Chart view state: cycle between "Bar", "Daily", and "ECharts"
   const chartViews = ["Bar", "Daily", "ECharts"];
   const [chartViewIndex, setChartViewIndex] = useState(0);
-  const toggleChartView = () => {
-    setChartViewIndex((prev) => (prev + 1) % chartViews.length);
-  };
+  const toggleChartView = () => setChartViewIndex((prev) => (prev + 1) % chartViews.length);
 
   // Refs for GSAP animations
   const barChartRef = useRef(null);
@@ -48,6 +41,37 @@ const Overview = () => {
   const budgetRef = useRef(null);
   const transactionListRef = useRef(null);
   const cardRefs = useRef([]);
+
+  // Common Chart Options for Chart.js charts
+  const getChartOptions = () => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: theme === "light" ? "#0f172a" : "#f8fafc",
+          font: { family: "Inter, sans-serif", size: 14 },
+        },
+      },
+      tooltip: {
+        backgroundColor: theme === "light" ? "#ffffff" : "#1e293b",
+        titleColor: theme === "light" ? "#0f172a" : "#f8fafc",
+        bodyColor: theme === "light" ? "#475569" : "#cbd5e1",
+        borderColor: theme === "light" ? "#e2e8f0" : "#334155",
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+      },
+    },
+    scales: {
+      x: {
+        grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
+        ticks: { color: theme === "light" ? "#64748b" : "#94a3b8" },
+      },
+      y: {
+        grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
+        ticks: { color: theme === "light" ? "#64748b" : "#94a3b8" },
+      },
+    },
+  });
 
   // ========= FETCH DATA ============
   const fetchData = async () => {
@@ -82,13 +106,12 @@ const Overview = () => {
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  // Initialize an array of zeros for each day in the current month
   const dailyExpenses = Array(daysInMonth).fill(0);
   transactions.forEach((tx) => {
     if (tx.type === "EXPENSE") {
       const txDate = new Date(tx.date);
       if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
-        const day = txDate.getDate(); // day of month (1-indexed)
+        const day = txDate.getDate();
         dailyExpenses[day - 1] += parseFloat(tx.amount);
       }
     }
@@ -122,14 +145,7 @@ const Overview = () => {
         label: "Expenses by Category",
         data: Object.values(categoryTotals).map((val) => parseFloat(val.toFixed(2))),
         backgroundColor: Object.keys(categoryTotals).map((_, i) =>
-          [
-            "#14b8a6",
-            "#10b981",
-            "#22c55e",
-            "#2dd4bf",
-            "#6366f1",
-            "#f97316",
-          ][i % 6]
+          ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6]
         ),
       },
     ],
@@ -140,39 +156,23 @@ const Overview = () => {
     name: cat,
     value: parseFloat(categoryTotals[cat].toFixed(2)),
     itemStyle: {
-      color: [
-        "#14b8a6",
-        "#10b981",
-        "#22c55e",
-        "#2dd4bf",
-        "#6366f1",
-        "#f97316",
-      ][i % 6],
+      color: ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6],
     },
   }));
   const echartsOptions = {
-    tooltip: {
-      trigger: "item",
-      formatter: "{b}: ${c} ({d}%)",
-    },
+    tooltip: { trigger: "item", formatter: "{b}: ${c} ({d}%)" },
     series: [
       {
         name: "Expenses",
         type: "pie",
         radius: "50%",
         data: echartsData,
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: "rgba(0, 0, 0, 0.5)",
-          },
-        },
+        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: "rgba(0,0,0,0.5)" } },
       },
     ],
   };
 
-  // ========= DOUGHNUT CHART DATA (ACCOUNT BALANCES) ============
+  // ========= DOUGHNUT CHART DATA (Account Balances) ============
   const doughnutData = {
     labels: accounts.map((acc) => acc.name),
     datasets: [
@@ -180,14 +180,7 @@ const Overview = () => {
         label: "Balances",
         data: accounts.map((acc) => parseFloat(acc.balance).toFixed(2)),
         backgroundColor: accounts.map((_, i) =>
-          [
-            "#14b8a6",
-            "#10b981",
-            "#22c55e",
-            "#2dd4bf",
-            "#6366f1",
-            "#f97316",
-          ][i % 6]
+          ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6]
         ),
       },
     ],
@@ -197,29 +190,10 @@ const Overview = () => {
   useEffect(() => {
     if (!loading) {
       const tl = gsap.timeline({ defaults: { duration: 1, ease: "power3.out" } });
-      tl.fromTo(
-        chartContainerRef.current,
-        { opacity: 0, x: 50 },
-        { opacity: 1, x: 0 }
-      )
-        .fromTo(
-          doughnutChartRef.current,
-          { opacity: 0, y: 50 },
-          { opacity: 1, y: 0 },
-          "-=0.7"
-        )
-        .fromTo(
-          budgetRef.current,
-          { opacity: 0, y: 50 },
-          { opacity: 1, y: 0 },
-          "-=0.7"
-        )
-        .fromTo(
-          transactionListRef.current,
-          { opacity: 0, y: 50 },
-          { opacity: 1, y: 0 },
-          "-=0.7"
-        );
+      tl.fromTo(chartContainerRef.current, { opacity: 0, x: 50 }, { opacity: 1, x: 0 })
+        .fromTo(doughnutChartRef.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0 }, "-=0.7")
+        .fromTo(budgetRef.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0 }, "-=0.7")
+        .fromTo(transactionListRef.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0 }, "-=0.7");
       if (cardRefs.current.length) {
         gsap.fromTo(
           cardRefs.current,
@@ -294,31 +268,41 @@ const Overview = () => {
     }
   };
 
-  // ========= Define filteredTransactions ============
-  // For now, if no search is implemented, we'll simply use all transactions.
+  // ========= TRANSACTION DELETE HANDLER ============
+  const handleDelete = async (id) => {
+    try {
+      await deleteTransaction(token, id);
+      fetchData();
+    } catch (err) {
+      console.error("Error deleting transaction:", err.message);
+      setError("Failed to delete transaction.");
+    }
+  };
+
+  // No filtering; using all transactions.
   const filteredTransactions = transactions;
 
   return (
     <div
-      className={`p-4 md:p-8 min-h-screen flex flex-col transition-colors
-        ${theme === "light"
-          ? "bg-gradient-to-br from-slate-50 to-white text-slate-800"
-          : "bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100"
-        }`}
+      className={`p-6 min-h-screen transition-colors duration-300 ${
+        theme === "light"
+          ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900"
+          : "bg-gradient-to-br from-gray-900 to-blue-900 text-gray-100"
+      }`}
     >
-      <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-teal-500 to-emerald-500">
+      {/* Main header using same gradient as other pages */}
+      <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-600">
         Overview Dashboard
       </h1>
 
-      {/* Advise user to add an account if none exist */}
+      {error && <div className="mb-4 text-center text-red-500">{error}</div>}
+
+      {/* Advisory Message if no accounts exist */}
       {!loading && accounts.length === 0 && (
-        <div className="max-w-3xl mx-auto mb-8 p-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg shadow-md text-center">
+        <div className="max-w-3xl mx-auto mb-8 p-4 glass-container text-center">
           <p>
             It looks like you haven't added any accounts yet. Please visit the{" "}
-            <span
-              className="text-teal-500 underline cursor-pointer"
-              onClick={() => navigate("/accounts")}
-            >
+            <span className="text-indigo-600 underline cursor-pointer" onClick={() => navigate("/accounts")}>
               Accounts
             </span>{" "}
             section to create your first account. Once added, you'll be able to track transactions,
@@ -329,36 +313,34 @@ const Overview = () => {
 
       {/* Top Controls Row */}
       <div className="flex flex-wrap items-center mb-8 gap-6 justify-center">
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          {/* Account Selection */}
-          <div className="bg-slate-50 dark:bg-gray-800 shadow-md rounded-lg p-4">
-            <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
-              Select an Account
-            </label>
-            <select
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 bg-slate-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100"
-              value={selectedAccount || ""}
-              onChange={(e) => setSelectedAccount(e.target.value)}
-              aria-label="Select Account"
-            >
-              <option value="" disabled>
-                Select an Account
-              </option>
-              {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.name} - ${parseFloat(acc.balance).toFixed(2)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Doughnut Chart for Account Balances */}
-          <div
-            ref={doughnutChartRef}
-            className="w-40 h-40 bg-slate-50 dark:bg-gray-800 shadow-md rounded-lg p-4 flex justify-center items-center"
+        {/* Account Selection */}
+        <div className="glass-container p-4 rounded-2xl shadow-2xl">
+          <label className="block mb-2 font-semibold text-gray-900 dark:text-gray-100">
+            Select an Account
+          </label>
+          <select
+            className="glass-input"
+            value={selectedAccount || ""}
+            onChange={(e) => setSelectedAccount(e.target.value)}
+            aria-label="Select Account"
           >
-            <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false }} />
-          </div>
+            <option value="" disabled>
+              Select an Account
+            </option>
+            {accounts.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.name} - ${parseFloat(acc.balance).toFixed(2)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Doughnut Chart for Account Balances */}
+        <div
+          ref={doughnutChartRef}
+          className="w-40 h-40 glass-container rounded-2xl p-4 shadow-2xl flex justify-center items-center"
+        >
+          <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
 
         {/* Create Transaction Button */}
@@ -366,7 +348,7 @@ const Overview = () => {
           <CreateTransactionModal
             accounts={accounts}
             onSuccess={fetchData}
-            className="px-6 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 transition duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className="px-6 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
       </div>
@@ -378,19 +360,17 @@ const Overview = () => {
           {/* LEFT COLUMN (Charts & Budget Tracker) */}
           <div className="lg:col-span-2 space-y-8">
             {/* Budget Tracker Card */}
-            <div ref={budgetRef} className="bg-slate-50 dark:bg-gray-800 shadow-md rounded-lg p-8">
-              <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-                Monthly Budget Tracker
-              </h2>
+            <div ref={budgetRef} className="glass-container rounded-2xl p-8 shadow-2xl">
+              <h2 className="text-xl font-bold mb-4 text-cyan-400">Monthly Budget Tracker</h2>
               {budget ? (
                 <>
                   <p className="mb-2 text-gray-700 dark:text-gray-300">
                     <span className="font-semibold">Budget:</span>{" "}
-                    <span className="text-teal-600 dark:text-teal-400">${budget.amount}</span>
+                    <span className="text-blue-600">{`$${budget.amount}`}</span>
                   </p>
                   <p className="mb-2 text-gray-700 dark:text-gray-300">
                     <span className="font-semibold">Spent (This Month):</span>{" "}
-                    <span className="text-red-500">${monthlyExpense.toFixed(2)}</span>
+                    <span className="text-red-500">{`$${monthlyExpense.toFixed(2)}`}</span>
                   </p>
                   {/* Progress Bar */}
                   <div className="relative w-full h-4 bg-gray-300 rounded-full overflow-hidden">
@@ -403,7 +383,7 @@ const Overview = () => {
                   <form onSubmit={handleBudgetUpdate} className="mt-4 flex flex-wrap gap-3">
                     <input
                       type="number"
-                      className="w-24 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 bg-slate-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100"
+                      className="glass-input w-24"
                       value={budgetAmount}
                       onChange={(e) => setBudgetAmount(e.target.value)}
                       placeholder="New amt"
@@ -411,7 +391,7 @@ const Overview = () => {
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 transition duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      className="px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       aria-label="Update Budget"
                     >
                       Update
@@ -419,7 +399,7 @@ const Overview = () => {
                     <button
                       type="button"
                       onClick={handleBudgetDelete}
-                      className="px-4 py-2 rounded-lg font-semibold text-white bg-red-500 hover:bg-red-600 transition duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-red-400"
+                      className="px-4 py-2 rounded-lg font-semibold text-white bg-red-500 hover:bg-red-600 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-red-400"
                       aria-label="Delete Budget"
                     >
                       Delete
@@ -428,13 +408,13 @@ const Overview = () => {
                 </>
               ) : (
                 <form onSubmit={handleBudgetCreate} className="space-y-3">
-                  <p className="text-gray-600 dark:text-gray-300">
+                  <p className="text-gray-700 dark:text-gray-300">
                     No budget set yet. Create one below:
                   </p>
                   <div className="flex flex-wrap gap-3 items-center">
                     <input
                       type="number"
-                      className="w-32 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 bg-slate-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100"
+                      className="glass-input w-32"
                       value={budgetAmount}
                       onChange={(e) => setBudgetAmount(e.target.value)}
                       placeholder="Budget amt"
@@ -443,7 +423,7 @@ const Overview = () => {
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 transition duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      className="px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       aria-label="Create Budget"
                     >
                       Create Budget
@@ -454,26 +434,25 @@ const Overview = () => {
             </div>
 
             {/* Chart Card with Toggle Arrow */}
-            <div ref={chartContainerRef} className="bg-slate-50 dark:bg-gray-800 shadow-md rounded-lg p-8 relative">
+            <div ref={chartContainerRef} className="glass-container rounded-2xl p-8 shadow-2xl relative">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                <h2 className="text-xl font-bold text-cyan-400">
                   Expenses Chart - {chartViews[chartViewIndex]}
                 </h2>
                 <button
                   onClick={toggleChartView}
-                  className="p-2 bg-gray-200 dark:bg-gray-700 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transform transition-transform duration-300 hover:rotate-90 shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="p-2 glass-input rounded-full hover:shadow-lg transform transition-transform duration-300 hover:rotate-90"
                   aria-label="Toggle Chart View"
                 >
                   →
                 </button>
               </div>
-              {/* Chart container with fixed height so every chart is consistent */}
               <div ref={barChartRef} className="h-[350px] w-full">
                 {chartViews[chartViewIndex] === "Bar" && (
-                  <Bar data={barData} options={{ responsive: true, maintainAspectRatio: false }} />
+                  <Bar data={barData} options={{ responsive: true, maintainAspectRatio: false, ...getChartOptions() }} />
                 )}
                 {chartViews[chartViewIndex] === "Daily" && (
-                  <Line data={dailyData} options={{ responsive: true, maintainAspectRatio: false }} />
+                  <Line data={dailyData} options={{ responsive: true, maintainAspectRatio: false, ...getChartOptions() }} />
                 )}
                 {chartViews[chartViewIndex] === "ECharts" && (
                   <ReactECharts option={echartsOptions} style={{ height: 350, width: "100%" }} />
@@ -483,32 +462,31 @@ const Overview = () => {
           </div>
 
           {/* RIGHT COLUMN (Transaction List) */}
-          <div ref={transactionListRef} className="bg-slate-50 dark:bg-gray-800 shadow-md rounded-lg p-8 overflow-y-auto max-h-[600px]">
-            <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-              All Transactions
-            </h2>
+          <div ref={transactionListRef} className="glass-container rounded-2xl p-8 shadow-2xl overflow-y-auto max-h-[600px]">
+            <h2 className="text-xl font-bold mb-4 text-cyan-400">All Transactions</h2>
             <div className="space-y-4">
               {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((tx) => (
+                filteredTransactions.map((tx, idx) => (
                   <div
                     key={tx.id}
-                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-100 dark:bg-gray-700 rounded-lg p-4 shadow-sm transform hover:scale-105 transition-transform duration-200"
+                    ref={(el) => (cardRefs.current[idx] = el)}
+                    className="glass-container p-4 rounded-md hover:shadow-lg transition-shadow"
                   >
-                    <div className="w-full">
-                      <p className="font-semibold text-gray-800 dark:text-gray-200">
-                        {tx.type} - ${parseFloat(tx.amount).toFixed(2)}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
-                        {new Date(tx.date).toLocaleDateString()} | {tx.category} | {tx.description}
-                      </p>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                      <span className="font-semibold text-lg text-cyan-400">
+                        {tx.type} - <span className="text-indigo-600">${parseFloat(tx.amount).toFixed(2)}</span>
+                      </span>
+                      <button
+                        className="mt-2 sm:mt-0 text-red-500 hover:text-red-600 font-bold transition-colors"
+                        onClick={() => handleDelete(tx.id)}
+                        aria-label="Delete Transaction"
+                      >
+                        Delete
+                      </button>
                     </div>
-                    <button
-                      className="mt-2 md:mt-0 text-red-500 hover:text-red-600 font-bold transition-colors"
-                      onClick={() => handleDelete(tx.id)}
-                      aria-label="Delete Transaction"
-                    >
-                      Delete
-                    </button>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+                      {new Date(tx.date).toLocaleDateString()} | {tx.category} | {tx.description}
+                    </div>
                   </div>
                 ))
               ) : (

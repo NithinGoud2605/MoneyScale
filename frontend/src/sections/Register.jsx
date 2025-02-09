@@ -2,24 +2,28 @@ import React, { useState, useContext, useRef, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
+import { useTheme } from "../theme/ThemeProvider";
 
 const Register = () => {
   const { register } = useContext(AuthContext);
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
+  // Form fields and error states
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // State for toggling password visibility
+  // States for toggling password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Reference for GSAP animation on form container
   const formContainerRef = useRef(null);
 
+  // Animate form container on mount
   useEffect(() => {
     if (formContainerRef.current) {
       gsap.fromTo(
@@ -30,6 +34,7 @@ const Register = () => {
     }
   }, []);
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
@@ -48,27 +53,47 @@ const Register = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 transition-colors p-4">
+    <div
+      className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${
+        theme === "light"
+          ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900"
+          : "bg-gradient-to-br from-gray-900 to-blue-900 text-gray-100"
+      }`}
+    >
       <div
         ref={formContainerRef}
-        className="max-w-md w-full bg-white dark:bg-slate-800 p-8 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700"
-        role="form"
-        aria-label="Registration Form"
+        className="w-full max-w-md glass-container backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-border"
       >
-        <h2 className="text-3xl font-extrabold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-emerald-500">
-          Create an Account
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username */}
+        <div className="text-center mb-8">
+          <div className="mb-6 inline-block p-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600">
+            <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
+            Create Account
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Start managing your finances today
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Username Field */}
           <div>
-            <label htmlFor="username" className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Username
             </label>
             <input
               id="username"
               type="text"
               aria-label="Enter your username"
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 border-slate-300"
+              className="w-full px-4 py-3 glass-input rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -76,16 +101,16 @@ const Register = () => {
             />
           </div>
 
-          {/* Email */}
+          {/* Email Field */}
           <div>
-            <label htmlFor="email" className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email
             </label>
             <input
               id="email"
               type="email"
               aria-label="Enter your email"
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 border-slate-300"
+              className="w-full px-4 py-3 glass-input rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -93,16 +118,16 @@ const Register = () => {
             />
           </div>
 
-          {/* Password */}
+          {/* Password Field */}
           <div className="relative">
-            <label htmlFor="password" className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password
             </label>
             <input
               id="password"
               type={showPassword ? "text" : "password"}
               aria-label="Enter your password"
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 border-slate-300 pr-10"
+              className="w-full px-4 py-3 glass-input rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all pr-12"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -115,27 +140,27 @@ const Register = () => {
             >
               {showPassword ? (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.03.165-2.019.474-2.955M21 21l-4.35-4.35M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               )}
             </button>
           </div>
 
-          {/* Confirm Password */}
+          {/* Confirm Password Field */}
           <div className="relative">
-            <label htmlFor="confirmPass" className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">
+            <label htmlFor="confirmPass" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Confirm Password
             </label>
             <input
               id="confirmPass"
               type={showConfirmPassword ? "text" : "password"}
               aria-label="Confirm your password"
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 border-slate-300 pr-10"
+              className="w-full px-4 py-3 glass-input rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all pr-12"
               placeholder="Confirm your password"
               value={confirmPass}
               onChange={(e) => setConfirmPass(e.target.value)}
@@ -148,41 +173,39 @@ const Register = () => {
             >
               {showConfirmPassword ? (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.03.165-2.019.474-2.955M21 21l-4.35-4.35M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               )}
             </button>
           </div>
 
-          {/* Error Message */}
           {errorMsg && (
-            <p className="text-red-500 text-center" role="alert">
+            <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg">
               {errorMsg}
-            </p>
+            </div>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white py-2 rounded hover:from-teal-600 hover:to-emerald-600 transition-colors font-semibold mt-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg"
             aria-label="Sign Up"
           >
-            Sign Up
+            Create Account
           </button>
         </form>
-        <p className="mt-4 text-sm text-center text-slate-600 dark:text-slate-300">
+        <p className="mt-6 text-center text-gray-600 dark:text-gray-400">
           Already have an account?{" "}
           <span
             onClick={() => navigate("/login")}
-            className="text-teal-500 cursor-pointer hover:underline font-bold"
+            className="text-cyan-500 hover:underline font-semibold cursor-pointer"
             aria-label="Go to Login Page"
           >
-            Log In
+            Sign In
           </span>
         </p>
       </div>

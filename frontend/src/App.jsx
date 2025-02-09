@@ -15,12 +15,17 @@ const App = () => {
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen flex flex-col">
-          {/* Top Navigation (visible on all pages) */}
+        {/* Outer container with a continuous background */}
+        <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+          {/* Fixed Navbar */}
           <Navbar />
 
-          {/* Main Content Area */}
-          <main className="flex-grow">
+          {/* Main Content:
+              - mt-20 ensures content starts below the fixed navbar.
+              - The inline style sets minHeight so that the main area always fills
+                the remaining viewport (assuming Navbar + Footer ≈ 160px total).
+          */}
+          <main className="flex-grow mt-20" style={{ minHeight: "calc(100vh - 160px)" }}>
             <Suspense fallback={<div className="text-center m-4">Loading...</div>}>
               <Routes>
                 {/* Public Routes */}
@@ -57,7 +62,7 @@ const App = () => {
             </Suspense>
           </main>
 
-          {/* Footer (visible on all pages) */}
+          {/* Footer */}
           <Footer />
         </div>
       </Router>

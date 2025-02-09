@@ -9,67 +9,117 @@ const Home = () => {
   const { theme } = useTheme();
 
   useEffect(() => {
-    if (heroRef.current) {
-      gsap.fromTo(
-        heroRef.current.querySelectorAll(".fade-in"),
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, stagger: 0.2, duration: 0.8, ease: "power3.out" }
-      );
-    }
-    if (featuresRef.current) {
-      gsap.fromTo(
-        featuresRef.current,
-        { opacity: 0, scale: 0.95 },
-        { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out", delay: 0.5 }
-      );
-    }
+    const tl = gsap.timeline();
+    tl.from(heroRef.current.querySelectorAll(".hero-element"), {
+      duration: 0.8,
+      y: 30,
+      opacity: 0,
+      stagger: 0.2,
+      ease: "power3.out"
+    }).from(
+      featuresRef.current.querySelectorAll(".feature-card"),
+      {
+        duration: 0.6,
+        y: 20,
+        opacity: 0,
+        stagger: 0.1,
+        ease: "back.out(1.7)"
+      },
+      "-=0.5"
+    );
   }, []);
 
   return (
     <div
-      className={`min-h-screen flex flex-col items-center justify-center p-4 transition-colors ${
+      className={`min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-300 ${
         theme === "light"
-          ? "bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800"
-          : "bg-gradient-to-br from-slate-900 to-slate-800 text-slate-200"
+          ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-gray-900"
+          : "bg-gradient-to-br from-gray-900 to-blue-900 text-gray-100"
       }`}
     >
-      <div ref={heroRef} className="max-w-3xl text-center space-y-6 fade-in">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-500 to-emerald-500">
-          Welcome to MoneyScale
+      <div ref={heroRef} className="max-w-4xl text-center space-y-8">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-600 hero-element">
+          Take Control of Your Finances
         </h1>
-        <p className="text-base sm:text-lg md:text-xl">
-          A smarter way to track your finances, budgets, and transactions—all in one place.
+        <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 hero-element">
+          Smart budgeting, expense tracking, and financial insights - all in one beautiful platform
         </p>
         <Link
-          to="/login"
-          className="inline-block bg-gradient-to-r from-teal-500 to-emerald-500 text-white px-6 py-3 rounded-full text-base sm:text-lg hover:opacity-90 transition-transform transform hover:scale-105 shadow-lg font-semibold"
+          to="/register"
+          className="inline-block px-8 py-4 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full hover:opacity-90 transition-opacity shadow-xl hero-element"
         >
-          Get Started
+          Get Started Free
         </Link>
       </div>
 
-      {/* Features Section */}
-      <div ref={featuresRef} className="mt-12 max-w-4xl w-full grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3 0 .74.405 1.385 1 1.723V18h4v-5.277c.595-.338 1-.983 1-1.723 0-1.657-1.343-3-3-3z" />
-          </svg>
-          <h3 className="mt-4 text-xl font-bold text-gray-800 dark:text-gray-100">Budgeting</h3>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">Set and manage budgets with ease.</p>
+      <div
+        ref={featuresRef}
+        className="mt-16 max-w-7xl w-full grid grid-cols-1 md:grid-cols-3 gap-8 px-4"
+      >
+        <div className="feature-card bg-card backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-border hover:-translate-y-2 transition-transform">
+          <div className="mb-6 p-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl w-max mx-auto">
+            <svg
+              className="w-12 h-12 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+              />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold mb-4 text-cyan-400">Track Everything</h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Monitor income, expenses, and investments across all your accounts in real-time
+          </p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h4l3 8 4-16 3 8h4" />
-          </svg>
-          <h3 className="mt-4 text-xl font-bold text-gray-800 dark:text-gray-100">Transactions</h3>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">View, add, and track every transaction.</p>
+
+        <div className="feature-card bg-card backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-border hover:-translate-y-2 transition-transform">
+          <div className="mb-6 p-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl w-max mx-auto">
+            <svg
+              className="w-12 h-12 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold mb-4 text-cyan-400">Smart Budgets</h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Create custom budgets with automatic spending alerts and progress tracking
+          </p>
         </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-5l-2-2m4 7v-5l2-2m5 7v-3a2 2 0 00-2-2h-3m-4 5v-3a2 2 0 00-2-2H7m7-5a2 2 0 012 2v1m0-1a2 2 0 00-2-2H7m4 0V4m4 4v1" />
-          </svg>
-          <h3 className="mt-4 text-xl font-bold text-gray-800 dark:text-gray-100">Insights</h3>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">Visualize your spending trends.</p>
+
+        <div className="feature-card bg-card backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-border hover:-translate-y-2 transition-transform">
+          <div className="mb-6 p-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl w-max mx-auto">
+            <svg
+              className="w-12 h-12 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold mb-4 text-cyan-400">Powerful Insights</h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Get AI-powered financial recommendations and predictive analytics
+          </p>
         </div>
       </div>
     </div>
