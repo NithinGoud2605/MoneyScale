@@ -10,6 +10,7 @@ import CreateTransactionModal from "../components/CreateTransactionModal";
 import gsap from "gsap";
 import { useTheme } from "../theme/ThemeProvider";
 import { useNavigate } from "react-router-dom";
+import ChartSwitcher from "../components/ChartSwitcher"; // Import the new component
 
 Chart.register(...registerables);
 
@@ -29,10 +30,8 @@ const Overview = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Chart view state: cycle between "Bar", "Daily", and "ECharts"
-  const chartViews = ["Bar", "Daily", "ECharts"];
-  const [chartViewIndex, setChartViewIndex] = useState(0);
-  const toggleChartView = () => setChartViewIndex((prev) => (prev + 1) % chartViews.length);
+  // Chart view state: use string values "Bar", "Daily", "Pie"
+  const [chartView, setChartView] = useState("Bar");
 
   // Refs for GSAP animations
   const barChartRef = useRef(null);
@@ -433,31 +432,16 @@ const Overview = () => {
               )}
             </div>
 
-            {/* Chart Card with Toggle Arrow */}
+            {/* Chart Card with ChartSwitcher */}
             <div ref={chartContainerRef} className="glass-container rounded-2xl p-8 shadow-2xl relative">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-cyan-400">
-                  Expenses Chart - {chartViews[chartViewIndex]}
-                </h2>
-                <button
-                  onClick={toggleChartView}
-                  className="p-2 glass-input rounded-full hover:shadow-lg transform transition-transform duration-300 hover:rotate-90"
-                  aria-label="Toggle Chart View"
-                >
-                  →
-                </button>
-              </div>
-              <div ref={barChartRef} className="h-[350px] w-full">
-                {chartViews[chartViewIndex] === "Bar" && (
-                  <Bar data={barData} options={{ responsive: true, maintainAspectRatio: false, ...getChartOptions() }} />
-                )}
-                {chartViews[chartViewIndex] === "Daily" && (
-                  <Line data={dailyData} options={{ responsive: true, maintainAspectRatio: false, ...getChartOptions() }} />
-                )}
-                {chartViews[chartViewIndex] === "ECharts" && (
-                  <ReactECharts option={echartsOptions} style={{ height: 350, width: "100%" }} />
-                )}
-              </div>
+              <ChartSwitcher
+                chartView={chartView}
+                onChange={setChartView}
+                barData={barData}
+                dailyData={dailyData}
+                echartsOptions={echartsOptions}
+                getChartOptions={getChartOptions}
+              />
             </div>
           </div>
 
