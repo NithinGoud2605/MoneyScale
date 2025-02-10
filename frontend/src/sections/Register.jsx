@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-// src/sections/Register.jsx
-import React, { useEffect, useState, useContext, useRef, useCallback } from "react";
-=======
 import React, { useState, useContext, useRef, useEffect } from "react";
->>>>>>> parent of 66452a9 (deploy)
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";

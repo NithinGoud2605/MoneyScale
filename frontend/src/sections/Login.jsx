@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-// src/sections/Login.jsx
-import React, { useEffect, useState, useContext, useRef, useCallback } from "react";
-=======
 import React, { useState, useContext, useRef, useEffect } from "react";
->>>>>>> parent of 66452a9 (deploy)
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
@@ -19,12 +14,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-<<<<<<< HEAD
-  const [isSubmitting, setIsSubmitting] = useState(false);
-=======
 
   // Ref for the login card container to apply animations
->>>>>>> parent of 66452a9 (deploy)
   const cardRef = useRef(null);
 
   // Animate the login card on mount using GSAP
@@ -38,30 +29,6 @@ const Login = () => {
     }
   }, []);
 
-<<<<<<< HEAD
-  const handleSubmit = useCallback(
-    async (e) => {
-      e.preventDefault();
-      console.log("Submit event fired with email:", email);
-      setErrorMsg("");
-      setIsSubmitting(true);
-      try {
-        const success = await login(email, password);
-        console.log("Login function returned:", success);
-        if (!success) {
-          setErrorMsg("Invalid credentials. Please try again.");
-        } else {
-          navigate("/overview");
-        }
-      } catch (error) {
-        console.error("Error during login:", error);
-        setErrorMsg("An error occurred during login.");
-      }
-      setIsSubmitting(false);
-    },
-    [email, password, login, navigate]
-  );
-=======
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,7 +42,6 @@ const Login = () => {
       navigate("/overview");
     }
   };
->>>>>>> parent of 66452a9 (deploy)
 
   return (
     <div
@@ -155,10 +121,7 @@ const Login = () => {
                   viewBox="0 0 24 24"
                 >
                   {showPassword ? (
-<<<<<<< HEAD
-=======
                     // Eye Off Icon
->>>>>>> parent of 66452a9 (deploy)
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -197,12 +160,9 @@ const Login = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isSubmitting}
-            className={`w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg"
           >
-            {isSubmitting ? "Signing In..." : "Sign In"}
+            Sign In
           </button>
         </form>
 
