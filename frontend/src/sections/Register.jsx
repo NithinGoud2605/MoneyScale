@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 // src/sections/Register.jsx
 import React, { useEffect, useState, useContext, useRef, useCallback } from "react";
+=======
+import React, { useState, useContext, useRef, useEffect } from "react";
+>>>>>>> parent of 66452a9 (deploy)
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
@@ -9,15 +13,22 @@ const Register = () => {
   const { register } = useContext(AuthContext);
   const { theme } = useTheme();
   const navigate = useNavigate();
+
+  // Form fields and error states
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // States for toggling password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Reference for GSAP animation on form container
   const formContainerRef = useRef(null);
 
+  // Animate form container on mount
   useEffect(() => {
     if (formContainerRef.current) {
       gsap.fromTo(
@@ -28,20 +39,23 @@ const Register = () => {
     }
   }, []);
 
-  const handleSubmit = useCallback(async (e) => {
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+
     if (password !== confirmPass) {
       setErrorMsg("Passwords do not match");
       return;
     }
+
     const success = await register(username, email, password);
     if (success) {
       navigate("/login");
     } else {
       setErrorMsg("Registration failed. Possibly user already exists.");
     }
-  }, [username, email, password, confirmPass, register, navigate]);
+  };
 
   return (
     <div
@@ -73,7 +87,9 @@ const Register = () => {
             Start managing your finances today
           </p>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Username Field */}
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Username
@@ -89,6 +105,8 @@ const Register = () => {
               required
             />
           </div>
+
+          {/* Email Field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email
@@ -104,6 +122,8 @@ const Register = () => {
               required
             />
           </div>
+
+          {/* Password Field */}
           <div className="relative">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password
@@ -120,7 +140,7 @@ const Register = () => {
             />
             <button
               type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
+              onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400"
             >
               {showPassword ? (
@@ -135,6 +155,8 @@ const Register = () => {
               )}
             </button>
           </div>
+
+          {/* Confirm Password Field */}
           <div className="relative">
             <label htmlFor="confirmPass" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Confirm Password
@@ -151,7 +173,7 @@ const Register = () => {
             />
             <button
               type="button"
-              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400"
             >
               {showConfirmPassword ? (
@@ -166,11 +188,13 @@ const Register = () => {
               )}
             </button>
           </div>
+
           {errorMsg && (
             <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg">
               {errorMsg}
             </div>
           )}
+
           <button
             type="submit"
             className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg"

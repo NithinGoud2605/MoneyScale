@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useContext, useRef, useCallback, useMemo } from "react";
-import { Doughnut } from "react-chartjs-2";
+import React, { useEffect, useState, useContext, useRef } from "react";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { Chart, registerables } from "chart.js";
+import ReactECharts from "echarts-for-react";
 import { AuthContext } from "../context/AuthContext";
 import { getBudgets, createBudget, updateBudget, deleteBudget } from "../services/budgetService";
 import { getTransactions, deleteTransaction } from "../services/transactionService";
@@ -9,7 +10,7 @@ import CreateTransactionModal from "../components/CreateTransactionModal";
 import gsap from "gsap";
 import { useTheme } from "../theme/ThemeProvider";
 import { useNavigate } from "react-router-dom";
-import ChartSwitcher from "../components/ChartSwitcher";
+import ChartSwitcher from "../components/ChartSwitcher"; // Import the new component
 
 Chart.register(...registerables);
 
@@ -18,22 +19,61 @@ const Overview = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
 
+  // Data states
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
+
+  // Budget form state
   const [budgetAmount, setBudgetAmount] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Chart view state: use string values "Bar", "Daily", "Pie"
   const [chartView, setChartView] = useState("Bar");
 
+  // Refs for GSAP animations
+  const barChartRef = useRef(null);
   const chartContainerRef = useRef(null);
   const doughnutChartRef = useRef(null);
   const budgetRef = useRef(null);
   const transactionListRef = useRef(null);
   const cardRefs = useRef([]);
 
-  const fetchData = useCallback(async () => {
+  // Common Chart Options for Chart.js charts
+  const getChartOptions = () => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: theme === "light" ? "#1e293b" : "#f8fafc", // slate-800 for light mode
+          font: { family: "Inter, sans-serif", size: 14 },
+        },
+      },
+      tooltip: {
+        backgroundColor: theme === "light" ? "#ffffff" : "#1e293b",
+        titleColor: theme === "light" ? "#1e293b" : "#f8fafc",
+        bodyColor: theme === "light" ? "#475569" : "#cbd5e1",
+        borderColor: theme === "light" ? "#e2e8f0" : "#334155",
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+      },
+    },
+    scales: {
+      x: {
+        grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
+        ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
+      },
+      y: {
+        grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
+        ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
+      },
+    },
+  });
+
+  // ========= FETCH DATA ============
+  const fetchData = async () => {
     setLoading(true);
     try {
       const [txRes, accRes, budRes] = await Promise.all([
@@ -52,35 +92,31 @@ const Overview = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  };
 
   useEffect(() => {
     if (token) {
       fetchData();
     }
-  }, [token, fetchData]);
+  }, [token]);
 
-  const currentDate = useMemo(() => new Date(), []);
+  // ========= DAILY EXPENSES CHART ============
+  const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  const daysInMonth = useMemo(() => new Date(currentYear, currentMonth + 1, 0).getDate(), [currentYear, currentMonth]);
-  
-  const dailyExpenses = useMemo(() => {
-    const expenses = Array(daysInMonth).fill(0);
-    transactions.forEach((tx) => {
-      if (tx.type === "EXPENSE") {
-        const txDate = new Date(tx.date);
-        if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
-          expenses[txDate.getDate() - 1] += parseFloat(tx.amount);
-        }
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const dailyExpenses = Array(daysInMonth).fill(0);
+  transactions.forEach((tx) => {
+    if (tx.type === "EXPENSE") {
+      const txDate = new Date(tx.date);
+      if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+        const day = txDate.getDate();
+        dailyExpenses[day - 1] += parseFloat(tx.amount);
       }
-    });
-    return expenses;
-  }, [transactions, daysInMonth, currentMonth, currentYear]);
-
-  const dailyLabels = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
-
-  const dailyData = useMemo(() => ({
+    }
+  });
+  const dailyLabels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const dailyData = {
     labels: dailyLabels,
     datasets: [
       {
@@ -91,17 +127,17 @@ const Overview = () => {
         fill: false,
       },
     ],
-  }), [dailyLabels, dailyExpenses]);
+  };
 
-  const expenseTransactions = useMemo(() => transactions.filter((tx) => tx.type === "EXPENSE"), [transactions]);
-  const categoryTotals = useMemo(() => expenseTransactions.reduce((acc, tx) => {
+  // ========= EXPENSES BY CATEGORY (Bar Chart) ============
+  const expenseTransactions = transactions.filter((tx) => tx.type === "EXPENSE");
+  const categoryTotals = expenseTransactions.reduce((acc, tx) => {
     const cat = tx.category ? tx.category.trim() : "Unknown";
     const amt = parseFloat(tx.amount);
     acc[cat] = (acc[cat] || 0) + amt;
     return acc;
-  }, {}), [expenseTransactions]);
-
-  const barData = useMemo(() => ({
+  }, {});
+  const barData = {
     labels: Object.keys(categoryTotals),
     datasets: [
       {
@@ -112,17 +148,17 @@ const Overview = () => {
         ),
       },
     ],
-  }), [categoryTotals]);
+  };
 
-  const echartsData = useMemo(() => Object.keys(categoryTotals).map((cat, i) => ({
+  // ========= ECharts Pie Chart Data ============
+  const echartsData = Object.keys(categoryTotals).map((cat, i) => ({
     name: cat,
     value: parseFloat(categoryTotals[cat].toFixed(2)),
     itemStyle: {
       color: ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6],
     },
-  })), [categoryTotals]);
-
-  const echartsOptions = useMemo(() => ({
+  }));
+  const echartsOptions = {
     tooltip: { trigger: "item", formatter: "{b}: ${c} ({d}%)" },
     series: [
       {
@@ -133,9 +169,10 @@ const Overview = () => {
         emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: "rgba(0,0,0,0.5)" } },
       },
     ],
-  }), [echartsData]);
+  };
 
-  const doughnutData = useMemo(() => ({
+  // ========= DOUGHNUT CHART DATA (Account Balances) ============
+  const doughnutData = {
     labels: accounts.map((acc) => acc.name),
     datasets: [
       {
@@ -146,8 +183,9 @@ const Overview = () => {
         ),
       },
     ],
-  }), [accounts]);
+  };
 
+  // ========= GSAP ANIMATIONS ============
   useEffect(() => {
     if (!loading) {
       const tl = gsap.timeline({ defaults: { duration: 1, ease: "power3.out" } });
@@ -165,24 +203,25 @@ const Overview = () => {
     }
   }, [loading, accounts]);
 
+  // ========= BUDGET LOGIC ============
   const budget = budgets[0] || null;
-  const monthlyExpense = useMemo(() => expenseTransactions
+  const monthlyExpense = expenseTransactions
     .filter(
       (tx) =>
         tx.type === "EXPENSE" &&
         new Date(tx.date).getMonth() === currentMonth &&
         new Date(tx.date).getFullYear() === currentYear
     )
-    .reduce((acc, tx) => acc + parseFloat(tx.amount), 0), [expenseTransactions, currentMonth, currentYear]);
-
+    .reduce((acc, tx) => acc + parseFloat(tx.amount), 0);
   const spentPercentage = budget ? (monthlyExpense / budget.amount) * 100 : 0;
-  const getProgressColor = useCallback(() => {
+  const getProgressColor = () => {
     if (spentPercentage < 50) return "bg-green-500";
     if (spentPercentage < 80) return "bg-yellow-500";
     return "bg-red-500";
-  }, [spentPercentage]);
+  };
 
-  const handleBudgetCreate = useCallback(async (e) => {
+  // ========= BUDGET HANDLERS ============
+  const handleBudgetCreate = async (e) => {
     e.preventDefault();
     setError("");
     if (!budgetAmount || isNaN(budgetAmount) || parseFloat(budgetAmount) <= 0) {
@@ -197,9 +236,9 @@ const Overview = () => {
       console.error("Error creating budget:", err.message);
       setError("Failed to create budget. Try again.");
     }
-  }, [budgetAmount, token]);
+  };
 
-  const handleBudgetUpdate = useCallback(async (e) => {
+  const handleBudgetUpdate = async (e) => {
     e.preventDefault();
     setError("");
     if (!budgetAmount || isNaN(budgetAmount) || parseFloat(budgetAmount) <= 0) {
@@ -214,9 +253,9 @@ const Overview = () => {
       console.error("Error updating budget:", err.message);
       setError("Failed to update budget. Try again.");
     }
-  }, [budgetAmount, token, budget]);
+  };
 
-  const handleBudgetDelete = useCallback(async () => {
+  const handleBudgetDelete = async () => {
     setError("");
     try {
       await deleteBudget(token, budget.id);
@@ -226,9 +265,10 @@ const Overview = () => {
       console.error("Error deleting budget:", err.message);
       setError("Failed to delete budget. Try again.");
     }
-  }, [token, budget]);
+  };
 
-  const handleDelete = useCallback(async (id) => {
+  // ========= TRANSACTION DELETE HANDLER ============
+  const handleDelete = async (id) => {
     try {
       await deleteTransaction(token, id);
       fetchData();
@@ -236,9 +276,10 @@ const Overview = () => {
       console.error("Error deleting transaction:", err.message);
       setError("Failed to delete transaction.");
     }
-  }, [token, fetchData]);
+  };
 
-  const filteredTransactions = useMemo(() => transactions, [transactions]);
+  // No filtering; using all transactions.
+  const filteredTransactions = transactions;
 
   return (
     <div
@@ -248,10 +289,14 @@ const Overview = () => {
           : "bg-gradient-to-br from-gray-900 to-blue-900 text-gray-100"
       }`}
     >
+      {/* Main header using same gradient as other pages */}
       <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-600">
         Overview Dashboard
       </h1>
+
       {error && <div className="mb-4 text-center text-red-500">{error}</div>}
+
+      {/* Advisory Message if no accounts exist */}
       {!loading && accounts.length === 0 && (
         <div className="max-w-3xl mx-auto mb-8 p-4 glass-container text-center">
           <p>
@@ -264,7 +309,10 @@ const Overview = () => {
           </p>
         </div>
       )}
+
+      {/* Top Controls Row */}
       <div className="flex flex-wrap items-center mb-8 gap-6 justify-center">
+        {/* Account Selection */}
         <div className="glass-container p-4 rounded-2xl shadow-2xl">
           <label className="block mb-2 font-semibold text-slate-900 dark:text-gray-100">
             Select an Account
@@ -285,12 +333,16 @@ const Overview = () => {
             ))}
           </select>
         </div>
+
+        {/* Doughnut Chart for Account Balances */}
         <div
           ref={doughnutChartRef}
           className="w-40 h-40 glass-container rounded-2xl p-4 shadow-2xl flex justify-center items-center"
         >
           <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
+
+        {/* Create Transaction Button */}
         <div>
           <CreateTransactionModal
             accounts={accounts}
@@ -299,11 +351,14 @@ const Overview = () => {
           />
         </div>
       </div>
+
       {loading ? (
         <div className="text-center text-gray-500">Loading...</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* LEFT COLUMN (Charts & Budget Tracker) */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Budget Tracker Card */}
             <div ref={budgetRef} className="glass-container rounded-2xl p-8 shadow-2xl">
               <h2 className="text-xl font-bold mb-4 text-cyan-400">Monthly Budget Tracker</h2>
               {budget ? (
@@ -316,12 +371,14 @@ const Overview = () => {
                     <span className="font-semibold">Spent (This Month):</span>{" "}
                     <span className="text-red-500">{`$${monthlyExpense.toFixed(2)}`}</span>
                   </p>
+                  {/* Progress Bar */}
                   <div className="relative w-full h-4 bg-gray-300 rounded-full overflow-hidden">
                     <div
                       className={`absolute h-full ${getProgressColor()}`}
                       style={{ width: `${Math.min(spentPercentage, 100)}%` }}
                     />
                   </div>
+                  {/* Update / Delete Budget Forms */}
                   <form onSubmit={handleBudgetUpdate} className="mt-4 flex flex-wrap gap-3">
                     <input
                       type="number"
@@ -374,6 +431,8 @@ const Overview = () => {
                 </form>
               )}
             </div>
+
+            {/* Chart Card with ChartSwitcher */}
             <div ref={chartContainerRef} className="glass-container rounded-2xl p-8 shadow-2xl relative">
               <ChartSwitcher
                 chartView={chartView}
@@ -381,38 +440,12 @@ const Overview = () => {
                 barData={barData}
                 dailyData={dailyData}
                 echartsOptions={echartsOptions}
-                getChartOptions={() => ({
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      labels: {
-                        color: theme === "light" ? "#1e293b" : "#f8fafc",
-                        font: { family: "Inter, sans-serif", size: 14 },
-                      },
-                    },
-                    tooltip: {
-                      backgroundColor: theme === "light" ? "#ffffff" : "#1e293b",
-                      titleColor: theme === "light" ? "#1e293b" : "#f8fafc",
-                      bodyColor: theme === "light" ? "#475569" : "#cbd5e1",
-                      borderColor: theme === "light" ? "#e2e8f0" : "#334155",
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                    },
-                  },
-                  scales: {
-                    x: {
-                      grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
-                      ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
-                    },
-                    y: {
-                      grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
-                      ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
-                    },
-                  },
-                })}
+                getChartOptions={getChartOptions}
               />
             </div>
           </div>
+
+          {/* RIGHT COLUMN (Transaction List) */}
           <div ref={transactionListRef} className="glass-container rounded-2xl p-8 shadow-2xl overflow-y-auto max-h-[600px]">
             <h2 className="text-xl font-bold mb-4 text-cyan-400">All Transactions</h2>
             <div className="space-y-4">

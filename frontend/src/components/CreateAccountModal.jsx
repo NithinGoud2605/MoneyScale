@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import { createAccount } from "../services/accountService";
 import { AuthContext } from "../context/AuthContext";
 import gsap from "gsap";
@@ -13,6 +13,7 @@ const CreateAccountModal = ({ onSuccess }) => {
 
   const modalRef = useRef(null);
 
+  // Animate modal content when modal opens
   useEffect(() => {
     if (isOpen && modalRef.current) {
       gsap.fromTo(
@@ -23,7 +24,7 @@ const CreateAccountModal = ({ onSuccess }) => {
     }
   }, [isOpen]);
 
-  const handleCreateAccount = useCallback(async () => {
+  const handleCreateAccount = async () => {
     if (!accountName.trim()) {
       setError("Account name is required.");
       return;
@@ -32,12 +33,14 @@ const CreateAccountModal = ({ onSuccess }) => {
       setError("Balance cannot be negative.");
       return;
     }
+
     try {
       await createAccount(token, {
         name: accountName,
         type: accountType,
         balance,
       });
+      // Reset form and close modal
       setIsOpen(false);
       setAccountName("");
       setAccountType("CURRENT");
@@ -51,7 +54,7 @@ const CreateAccountModal = ({ onSuccess }) => {
           "An error occurred while creating the account. Please try again."
       );
     }
-  }, [accountName, accountType, balance, token, onSuccess]);
+  };
 
   return (
     <>
@@ -61,6 +64,7 @@ const CreateAccountModal = ({ onSuccess }) => {
       >
         Create Account
       </button>
+
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
@@ -86,6 +90,7 @@ const CreateAccountModal = ({ onSuccess }) => {
             </div>
             {error && <p className="text-red-500 mb-4">{error}</p>}
             <div className="space-y-4">
+              {/* Account Name */}
               <div>
                 <label className="block text-sm font-medium">Account Name</label>
                 <input
@@ -96,6 +101,7 @@ const CreateAccountModal = ({ onSuccess }) => {
                   className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
                 />
               </div>
+              {/* Account Type */}
               <div>
                 <label className="block text-sm font-medium">Account Type</label>
                 <select
@@ -107,6 +113,7 @@ const CreateAccountModal = ({ onSuccess }) => {
                   <option value="SAVINGS">Savings</option>
                 </select>
               </div>
+              {/* Initial Balance */}
               <div>
                 <label className="block text-sm font-medium">Initial Balance</label>
                 <input
@@ -118,6 +125,7 @@ const CreateAccountModal = ({ onSuccess }) => {
                   className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 border-slate-300"
                 />
               </div>
+              {/* Action Buttons */}
               <div className="flex justify-end space-x-4 pt-4">
                 <button
                   type="button"

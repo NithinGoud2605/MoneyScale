@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import { createTransaction } from "../services/transactionService";
 import { updateAccount } from "../services/accountService";
 import { AuthContext } from "../context/AuthContext";
@@ -17,6 +17,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
 
   const modalRef = useRef(null);
 
+  // Animate modal on open using GSAP
   useEffect(() => {
     if (isOpen && modalRef.current) {
       gsap.fromTo(
@@ -27,7 +28,8 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
     }
   }, [isOpen]);
 
-  const handleCreateTransaction = useCallback(async () => {
+  const handleCreateTransaction = async () => {
+    // Validate input values
     if (!amount || isNaN(amount) || Number(amount) <= 0) {
       setError("Amount must be a positive number.");
       return;
@@ -36,19 +38,27 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
       setError("Category and Account are required.");
       return;
     }
+
     try {
+      // Find the selected account
       const selectedAcc = accounts.find((acc) => acc.id === accountId);
       if (!selectedAcc) {
         setError("Invalid account selected.");
         return;
       }
+      
+      // Convert the account balance to a number before doing any arithmetic.
       let newBalance = parseFloat(selectedAcc.balance);
       if (type === "INCOME") {
         newBalance += parseFloat(amount);
       } else {
         newBalance -= parseFloat(amount);
       }
+
+      // Update the account balance
       await updateAccount(token, accountId, { balance: newBalance });
+
+      // Create the transaction
       await createTransaction(token, {
         type,
         amount: parseFloat(amount),
@@ -57,6 +67,8 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
         category,
         accountId,
       });
+
+      // Reset the form, close modal, and trigger onSuccess callback
       setIsOpen(false);
       setType("EXPENSE");
       setAmount("");
@@ -73,7 +85,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
           "An error occurred while creating the transaction."
       );
     }
-  }, [amount, category, accountId, type, description, date, token, accounts, onSuccess]);
+  };
 
   return (
     <>
@@ -83,6 +95,7 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
       >
         Create Transaction
       </button>
+
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
@@ -107,7 +120,9 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
               </button>
             </div>
             {error && <p className="text-red-500 mb-4">{error}</p>}
+
             <div className="space-y-4">
+              {/* Transaction Type */}
               <div>
                 <label className="block text-sm font-medium">Type</label>
                 <select
@@ -119,6 +134,8 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                   <option value="EXPENSE">Expense</option>
                 </select>
               </div>
+
+              {/* Amount */}
               <div>
                 <label className="block text-sm font-medium">Amount</label>
                 <input
@@ -131,6 +148,8 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                   step="0.01"
                 />
               </div>
+
+              {/* Description */}
               <div>
                 <label className="block text-sm font-medium">Description</label>
                 <input
@@ -141,6 +160,8 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
+
+              {/* Date */}
               <div>
                 <label className="block text-sm font-medium">Date</label>
                 <input
@@ -151,6 +172,8 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                   required
                 />
               </div>
+
+              {/* Category */}
               <div>
                 <label className="block text-sm font-medium">Category</label>
                 <input
@@ -162,6 +185,8 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                   required
                 />
               </div>
+
+              {/* Account Selection */}
               <div>
                 <label className="block text-sm font-medium">Account</label>
                 <select
@@ -180,6 +205,8 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
                   ))}
                 </select>
               </div>
+
+              {/* Action Buttons */}
               <div className="flex justify-end space-x-4 pt-4">
                 <button
                   type="button"

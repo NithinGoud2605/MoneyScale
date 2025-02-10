@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { getTransactions, createTransaction, deleteTransaction } from "../services/transactionService";
 import { getAccounts } from "../services/accountService";
 import { AuthContext } from "../context/AuthContext";
@@ -8,6 +8,8 @@ import { useTheme } from "../theme/ThemeProvider";
 const Transactions = () => {
   const { token } = useContext(AuthContext);
   const { theme } = useTheme();
+
+  // State for transactions, accounts, form data, error message, and search query
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [form, setForm] = useState({
@@ -21,9 +23,11 @@ const Transactions = () => {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Refs for animation
   const containerRef = useRef(null);
   const formRef = useRef(null);
 
+  // Fetch transactions and accounts when token is available
   useEffect(() => {
     if (token) {
       fetchTransactions();
@@ -31,7 +35,7 @@ const Transactions = () => {
     }
   }, [token]);
 
-  const fetchTransactions = useCallback(async () => {
+  const fetchTransactions = async () => {
     try {
       const data = await getTransactions(token);
       setTransactions(data || []);
@@ -39,17 +43,18 @@ const Transactions = () => {
       console.error("Error fetching transactions:", err);
       setError("Failed to fetch transactions.");
     }
-  }, [token]);
+  };
 
-  const fetchAccounts = useCallback(async () => {
+  const fetchAccounts = async () => {
     try {
       const data = await getAccounts(token);
       setAccounts(data || []);
     } catch (err) {
       console.error("Error fetching accounts:", err);
     }
-  }, [token]);
+  };
 
+  // GSAP animations for the transaction form and list container
   useEffect(() => {
     if (formRef.current) {
       gsap.fromTo(
@@ -60,22 +65,21 @@ const Transactions = () => {
     }
   }, []);
 
-  // Animate container only when the number of transactions changes
-  const prevTxLength = useRef(transactions.length);
   useEffect(() => {
-    if (containerRef.current && transactions.length !== prevTxLength.current) {
-      prevTxLength.current = transactions.length;
+    if (containerRef.current) {
       gsap.fromTo(
         containerRef.current,
         { opacity: 0, y: 20 },
         { opacity: 1, y: 0, duration: 1, ease: "power3.out" }
       );
     }
-  }, [transactions.length]);
+  }, [transactions]);
 
-  const handleCreate = useCallback(async (e) => {
+  // Handlers for creating and deleting transactions
+  const handleCreate = async (e) => {
     e.preventDefault();
     setError("");
+
     if (!form.amount || isNaN(form.amount) || parseFloat(form.amount) <= 0) {
       setError("Please enter a valid positive amount.");
       return;
@@ -84,6 +88,7 @@ const Transactions = () => {
       setError("Please select an account.");
       return;
     }
+
     try {
       await createTransaction(token, { ...form, amount: parseFloat(form.amount) });
       setForm({ type: "INCOME", amount: "", description: "", date: "", category: "", accountId: "" });
@@ -92,9 +97,9 @@ const Transactions = () => {
       console.error("Error creating transaction:", err);
       setError("Failed to create transaction.");
     }
-  }, [form, token, fetchTransactions]);
+  };
 
-  const handleDelete = useCallback(async (id) => {
+  const handleDelete = async (id) => {
     try {
       await deleteTransaction(token, id);
       fetchTransactions();
@@ -102,15 +107,14 @@ const Transactions = () => {
       console.error("Error deleting transaction:", err);
       setError("Failed to delete transaction.");
     }
-  }, [token, fetchTransactions]);
+  };
 
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter((tx) =>
-      tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.type.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [transactions, searchQuery]);
+  // Filter transactions based on search query
+  const filteredTransactions = transactions.filter((tx) =>
+    tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    tx.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    tx.type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div
@@ -121,6 +125,7 @@ const Transactions = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto">
+        {/* Header & Search */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <h2 className="text-4xl font-bold bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
             Transaction History
@@ -213,7 +218,7 @@ const Transactions = () => {
           </div>
 
           {/* Transactions List */}
-          <div className="lg:col-span-3 glass-container backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/30" ref={containerRef}>
+          <div className="lg:col-span-3 glass-container backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/30">
             <div className="space-y-4">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((tx) => (
