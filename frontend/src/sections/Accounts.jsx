@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, { useEffect, useState, useContext, useRef, useCallback, useMemo } from "react";
 import { getAccounts, createAccount, deleteAccount } from "../services/accountService";
 import { getTransactions } from "../services/transactionService";
 import { AuthContext } from "../context/AuthContext";
@@ -9,18 +9,15 @@ const Accounts = () => {
   const { token } = useContext(AuthContext);
   const { theme } = useTheme();
 
-  // State for accounts, transactions, form data, and error message
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [form, setForm] = useState({ name: "", type: "CURRENT", balance: 0 });
   const [error, setError] = useState("");
 
-  // Refs for animation
   const containerRef = useRef(null);
   const cardsRef = useRef([]);
 
-  // Combined data fetch function
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [accountsData, transactionsData] = await Promise.all([
         getAccounts(token),
@@ -32,15 +29,14 @@ const Accounts = () => {
       console.error("Error fetching accounts:", err);
       setError("Failed to fetch accounts.");
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) {
       fetchData();
     }
-  }, [token]);
+  }, [token, fetchData]);
 
-  // Animate the container (on mount)
   useEffect(() => {
     if (containerRef.current) {
       gsap.fromTo(
@@ -51,7 +47,6 @@ const Accounts = () => {
     }
   }, []);
 
-  // Animate each account card when accounts change
   useEffect(() => {
     if (cardsRef.current.length > 0) {
       gsap.fromTo(
@@ -62,8 +57,7 @@ const Accounts = () => {
     }
   }, [accounts]);
 
-  // Handler to create a new account
-  const handleCreate = async (e) => {
+  const handleCreate = useCallback(async (e) => {
     e.preventDefault();
     setError("");
     try {
@@ -74,10 +68,9 @@ const Accounts = () => {
       console.error("Error creating account:", err);
       setError("Failed to create account.");
     }
-  };
+  }, [form, token, fetchData]);
 
-  // Handler to delete an account
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     try {
       await deleteAccount(token, id);
       fetchData();
@@ -85,12 +78,9 @@ const Accounts = () => {
       console.error("Error deleting account:", err);
       setError("Failed to delete account.");
     }
-  };
+  }, [token, fetchData]);
 
-  // Calculate total balance across accounts
-  const totalBalance = accounts
-    .reduce((sum, acc) => sum + parseFloat(acc.balance), 0)
-    .toFixed(2);
+  const totalBalance = useMemo(() => accounts.reduce((sum, acc) => sum + parseFloat(acc.balance), 0).toFixed(2), [accounts]);
 
   return (
     <div
@@ -101,7 +91,6 @@ const Accounts = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto">
-        {/* Header & Summary */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-12 space-y-4 md:space-y-0">
           <h2 className="text-4xl font-bold bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
             Financial Portfolios
@@ -115,10 +104,7 @@ const Accounts = () => {
             </div>
           </div>
         </div>
-
-        {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Create Account Form - Sticky Sidebar */}
           <div className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-6 h-fit">
             <div className="glass-container p-6 rounded-2xl shadow-2xl transform perspective-1000 hover:rotate-x-2 transition-transform duration-300">
               <h3 className="text-2xl font-bold mb-6 text-cyan-400 border-b border-cyan-500/30 pb-3">
@@ -133,9 +119,7 @@ const Accounts = () => {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
-                  <span className="input-icon"></span>
                 </div>
-  
                 <div className="glass-input-container">
                   <select
                     className="glass-input"
@@ -145,9 +129,7 @@ const Accounts = () => {
                     <option value="CURRENT">Current Account</option>
                     <option value="SAVINGS">Savings Account</option>
                   </select>
-                  <span className="input-icon"></span>
                 </div>
-  
                 <div className="glass-input-container">
                   <input
                     type="number"
@@ -156,9 +138,7 @@ const Accounts = () => {
                     value={form.balance}
                     onChange={(e) => setForm({ ...form, balance: e.target.value })}
                   />
-                  <span className="input-icon"></span>
                 </div>
-  
                 <button
                   type="submit"
                   className="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-700 text-white rounded-xl hover:shadow-2xl transition-all duration-300 font-semibold"
@@ -168,8 +148,6 @@ const Accounts = () => {
               </form>
             </div>
           </div>
-  
-          {/* Accounts Grid */}
           <div className="lg:col-span-8 xl:col-span-9" ref={containerRef}>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {accounts.length > 0 ? (
@@ -179,7 +157,6 @@ const Accounts = () => {
                     ref={(el) => (cardsRef.current[idx] = el)}
                     className="glass-container group relative p-6 rounded-2xl shadow-2xl border border-white/30 hover:-translate-y-2 transition-all duration-300"
                   >
-                    {/* Account Header */}
                     <div className="flex justify-between items-center mb-6">
                       <div>
                         <h3 className="text-xl font-bold text-cyan-400">{acc.name}</h3>
@@ -189,8 +166,6 @@ const Accounts = () => {
                         ${parseFloat(acc.balance).toFixed(2)}
                       </div>
                     </div>
-  
-                    {/* Transaction Timeline */}
                     <div className="border-t border-cyan-500/20 pt-4">
                       <h4 className="text-sm font-semibold text-cyan-300 mb-3">Recent Activity</h4>
                       <div className="space-y-3">
@@ -213,8 +188,6 @@ const Accounts = () => {
                           ))}
                       </div>
                     </div>
-  
-                    {/* Delete Button */}
                     <button
                       onClick={() => handleDelete(acc.id)}
                       className="mt-4 w-full py-2 bg-red-500/20 text-red-400 rounded-lg backdrop-blur-sm hover:bg-red-500/30 transition-all duration-300"
@@ -222,8 +195,6 @@ const Accounts = () => {
                     >
                       Delete Account
                     </button>
-  
-                    {/* Hover Effect Elements */}
                     <div className="absolute inset-0 rounded-2xl border-2 border-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                   </div>
@@ -235,8 +206,6 @@ const Accounts = () => {
           </div>
         </div>
       </div>
-  
-      
     </div>
   );
 };

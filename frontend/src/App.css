@@ -6,11 +6,12 @@
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
 }
 
-/* Glass input */
+/* Glass input container */
 .glass-input-container {
   position: relative;
 }
 
+/* Glass input */
 .glass-input {
   width: 100%;
   padding: 1rem;
@@ -40,72 +41,15 @@
 
 /* Total Assets */
 .total-assets-light {
-  color: #374151; /* Darker gray for light mode */
+  color: #374151;
 }
 
 .total-assets-dark {
-  color: #f9fafb; /* Light text for dark mode */
-}
-
-.total-assets-value-light {
-  color: #1f2937; /* Even darker for value in light mode */
-}
-
-.total-assets-value-dark {
   color: #f9fafb;
 }
 
-/* Glassy container */
-.glass-container {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-}
-
-/* Glass input */
-.glass-input-container {
-  position: relative;
-}
-
-.glass-input {
-  width: 100%;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(4px);
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #1f2937;
-  transition: all 0.3s ease;
-}
-
-.glass-input:focus {
-  outline: none;
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(165, 180, 252, 0.5);
-}
-
-.input-icon {
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.25rem;
-  opacity: 0.6;
-}
-
-/* Total Assets */
-.total-assets-light {
-  color: #374151; /* Darker gray for light mode */
-}
-
-.total-assets-dark {
-  color: #f9fafb; /* Light text for dark mode */
-}
-
 .total-assets-value-light {
-  color: #1f2937; /* Even darker for value in light mode */
+  color: #1f2937;
 }
 
 .total-assets-value-dark {

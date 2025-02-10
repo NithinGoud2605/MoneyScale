@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect } from "react";
+import React, { useEffect, useState, useContext, useRef, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
@@ -8,17 +8,12 @@ const Login = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const { theme } = useTheme();
-
-  // Form field states and error message state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
-  // Ref for the login card container to apply animations
   const cardRef = useRef(null);
 
-  // Animate the login card on mount using GSAP
   useEffect(() => {
     if (cardRef.current) {
       gsap.fromTo(
@@ -29,19 +24,16 @@ const Login = () => {
     }
   }, []);
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setErrorMsg("");
-
-    // Call the login function from AuthContext
     const success = await login(email, password);
     if (!success) {
       setErrorMsg("Invalid credentials. Please try again.");
     } else {
       navigate("/overview");
     }
-  };
+  }, [email, password, login, navigate]);
 
   return (
     <div
@@ -57,18 +49,8 @@ const Login = () => {
       >
         <div className="text-center mb-8">
           <div className="mb-6 inline-block p-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600">
-            <svg
-              className="w-12 h-12 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
+            <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
@@ -78,9 +60,7 @@ const Login = () => {
             Sign in to manage your finances
           </p>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-6" aria-label="Login Form">
-          {/* Email Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email Address
@@ -94,8 +74,6 @@ const Login = () => {
               required
             />
           </div>
-
-          {/* Password Field with Show/Hide Toggle */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password
@@ -111,53 +89,27 @@ const Login = () => {
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                <svg
-                  className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {showPassword ? (
-                    // Eye Off Icon
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.03.165-2.019.474-2.955M21 21l-4.35-4.35M15 10a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.03.165-2.019.474-2.955M21 21l-4.35-4.35M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
                   ) : (
-                    // Eye Icon
                     <>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </>
                   )}
                 </svg>
               </button>
             </div>
           </div>
-
-          {/* Error Message */}
           {errorMsg && (
             <p className="text-red-500 text-center" role="alert">
               {errorMsg}
             </p>
           )}
-
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-lg"
@@ -165,7 +117,6 @@ const Login = () => {
             Sign In
           </button>
         </form>
-
         <p className="mt-6 text-center text-gray-600 dark:text-gray-400">
           Don't have an account?{" "}
           <span
