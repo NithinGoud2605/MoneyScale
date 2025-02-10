@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useContext, useMemo, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useMemo,
+  useCallback,
+} from "react";
 import { motion } from "framer-motion";
 import { Doughnut } from "react-chartjs-2";
 import { Chart, registerables } from "chart.js";
@@ -19,6 +25,40 @@ import CombinedInsightBanner from "../components/CombinedInsightBanner";
 
 Chart.register(...registerables);
 
+// Define constant color palette outside the component to avoid re-creation
+const COLORS = ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"];
+
+// Memoized TransactionItem component to prevent unnecessary re-renders
+const TransactionItem = React.memo(({ tx, idx, onDelete }) => (
+  <motion.div
+    key={tx.id}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, ease: "easeOut", delay: idx * 0.1 }}
+    className="glass-container p-4 rounded-md hover:shadow-lg transition-shadow"
+  >
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+      <span className="font-semibold text-lg text-cyan-400">
+        {tx.type} -{" "}
+        <span className="text-indigo-600">
+          ${parseFloat(tx.amount).toFixed(2)}
+        </span>
+      </span>
+      <button
+        className="mt-2 sm:mt-0 text-red-500 hover:text-red-600 font-bold transition-colors"
+        onClick={() => onDelete(tx.id)}
+        aria-label="Delete Transaction"
+      >
+        Delete
+      </button>
+    </div>
+    <div className="text-sm text-slate-700 dark:text-gray-300 mt-2">
+      {new Date(tx.date).toLocaleDateString()} | {tx.category} |{" "}
+      {tx.description}
+    </div>
+  </motion.div>
+));
+
 const Overview = () => {
   const { token } = useContext(AuthContext);
   const { theme } = useTheme();
@@ -34,7 +74,7 @@ const Overview = () => {
   const [loading, setLoading] = useState(true);
   const [chartView, setChartView] = useState("Bar");
 
-  // Define current date variables so they can be used in memoized calculations
+  // Define current date variables for memoized calculations
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -68,35 +108,38 @@ const Overview = () => {
   }, [token, fetchData]);
 
   // ========= COMMON CHART OPTIONS ============
-  const getChartOptions = useCallback(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        labels: {
-          color: theme === "light" ? "#1e293b" : "#f8fafc",
-          font: { family: "Inter, sans-serif", size: 14 },
+  const getChartOptions = useCallback(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: theme === "light" ? "#1e293b" : "#f8fafc",
+            font: { family: "Inter, sans-serif", size: 14 },
+          },
+        },
+        tooltip: {
+          backgroundColor: theme === "light" ? "#ffffff" : "#1e293b",
+          titleColor: theme === "light" ? "#1e293b" : "#f8fafc",
+          bodyColor: theme === "light" ? "#475569" : "#cbd5e1",
+          borderColor: theme === "light" ? "#e2e8f0" : "#334155",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
         },
       },
-      tooltip: {
-        backgroundColor: theme === "light" ? "#ffffff" : "#1e293b",
-        titleColor: theme === "light" ? "#1e293b" : "#f8fafc",
-        bodyColor: theme === "light" ? "#475569" : "#cbd5e1",
-        borderColor: theme === "light" ? "#e2e8f0" : "#334155",
-        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+      scales: {
+        x: {
+          grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
+          ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
+        },
+        y: {
+          grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
+          ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
+        },
       },
-    },
-    scales: {
-      x: {
-        grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
-        ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
-      },
-      y: {
-        grid: { color: theme === "light" ? "#e2e8f0" : "#334155" },
-        ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
-      },
-    },
-  }), [theme]);
+    }),
+    [theme]
+  );
 
   // ========= COMPUTED VALUES WITH useMemo ============
   const totalBalance = useMemo(() => {
@@ -109,83 +152,118 @@ const Overview = () => {
     transactions.forEach((tx) => {
       if (tx.type === "EXPENSE") {
         const txDate = new Date(tx.date);
-        if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+        if (
+          txDate.getMonth() === currentMonth &&
+          txDate.getFullYear() === currentYear
+        ) {
           expenses[txDate.getDate() - 1] += parseFloat(tx.amount);
         }
       }
     });
     return {
       labels: Array.from({ length: days }, (_, i) => i + 1),
-      datasets: [{
-        label: "Daily Expenses",
-        data: expenses.map(val => parseFloat(val.toFixed(2))),
-        borderColor: "#f97316",
-        backgroundColor: "#f97316",
-        fill: false,
-      }],
+      datasets: [
+        {
+          label: "Daily Expenses",
+          data: expenses.map((val) => parseFloat(val.toFixed(2))),
+          borderColor: "#f97316",
+          backgroundColor: "#f97316",
+          fill: false,
+        },
+      ],
     };
   }, [transactions, currentMonth, currentYear]);
 
   const categoryTotals = useMemo(() => {
-    return transactions.filter(tx => tx.type === "EXPENSE").reduce((acc, tx) => {
-      const cat = tx.category ? tx.category.trim() : "Unknown";
-      const amt = parseFloat(tx.amount);
-      acc[cat] = (acc[cat] || 0) + amt;
-      return acc;
-    }, {});
+    return transactions
+      .filter((tx) => tx.type === "EXPENSE")
+      .reduce((acc, tx) => {
+        const cat = tx.category ? tx.category.trim() : "Unknown";
+        const amt = parseFloat(tx.amount);
+        acc[cat] = (acc[cat] || 0) + amt;
+        return acc;
+      }, {});
   }, [transactions]);
 
-  const barData = useMemo(() => ({
-    labels: Object.keys(categoryTotals),
-    datasets: [{
-      label: "Expenses by Category",
-      data: Object.values(categoryTotals).map(val => parseFloat(val.toFixed(2))),
-      backgroundColor: Object.keys(categoryTotals).map((_, i) =>
-        ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6]
-      ),
-    }],
-  }), [categoryTotals]);
+  const barData = useMemo(
+    () => ({
+      labels: Object.keys(categoryTotals),
+      datasets: [
+        {
+          label: "Expenses by Category",
+          data: Object.values(categoryTotals).map((val) =>
+            parseFloat(val.toFixed(2))
+          ),
+          backgroundColor: Object.keys(categoryTotals).map(
+            (_, i) => COLORS[i % COLORS.length]
+          ),
+        },
+      ],
+    }),
+    [categoryTotals]
+  );
 
-  const echartsData = useMemo(() => (
-    Object.keys(categoryTotals).map((cat, i) => ({
-      name: cat,
-      value: parseFloat(categoryTotals[cat].toFixed(2)),
-      itemStyle: {
-        color: ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6],
-      },
-    }))
-  ), [categoryTotals]);
+  const echartsData = useMemo(
+    () =>
+      Object.keys(categoryTotals).map((cat, i) => ({
+        name: cat,
+        value: parseFloat(categoryTotals[cat].toFixed(2)),
+        itemStyle: {
+          color: COLORS[i % COLORS.length],
+        },
+      })),
+    [categoryTotals]
+  );
 
-  const echartsOptions = useMemo(() => ({
-    tooltip: { trigger: "item", formatter: "{b}: ${c} ({d}%)" },
-    series: [
-      {
-        name: "Expenses",
-        type: "pie",
-        radius: "50%",
-        data: echartsData,
-        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: "rgba(0,0,0,0.5)" } },
-      },
-    ],
-  }), [echartsData]);
+  const echartsOptions = useMemo(
+    () => ({
+      tooltip: { trigger: "item", formatter: "{b}: ${c} ({d}%)" },
+      series: [
+        {
+          name: "Expenses",
+          type: "pie",
+          radius: "50%",
+          data: echartsData,
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: "rgba(0,0,0,0.5)",
+            },
+          },
+        },
+      ],
+    }),
+    [echartsData]
+  );
 
-  const doughnutData = useMemo(() => ({
-    labels: accounts.map(acc => acc.name),
-    datasets: [{
-      label: "Balances",
-      data: accounts.map(acc => parseFloat(acc.balance).toFixed(2)),
-      backgroundColor: accounts.map((_, i) =>
-        ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6]
-      ),
-    }],
-  }), [accounts]);
+  const doughnutData = useMemo(
+    () => ({
+      labels: accounts.map((acc) => acc.name),
+      datasets: [
+        {
+          label: "Balances",
+          data: accounts.map((acc) =>
+            parseFloat(acc.balance).toFixed(2)
+          ),
+          backgroundColor: accounts.map(
+            (_, i) => COLORS[i % COLORS.length]
+          ),
+        },
+      ],
+    }),
+    [accounts]
+  );
 
   const monthlyExpense = useMemo(() => {
-    return transactions.filter(tx =>
-      tx.type === "EXPENSE" &&
-      new Date(tx.date).getMonth() === currentMonth &&
-      new Date(tx.date).getFullYear() === currentYear
-    ).reduce((acc, tx) => acc + parseFloat(tx.amount), 0);
+    return transactions
+      .filter(
+        (tx) =>
+          tx.type === "EXPENSE" &&
+          new Date(tx.date).getMonth() === currentMonth &&
+          new Date(tx.date).getFullYear() === currentYear
+      )
+      .reduce((acc, tx) => acc + parseFloat(tx.amount), 0);
   }, [transactions, currentMonth, currentYear]);
 
   const sortedCategories = useMemo(() => {
@@ -197,47 +275,65 @@ const Overview = () => {
 
   const combinedPrompt = useMemo(() => {
     return `User Financial Overview:
-- You have ${accounts.length} account(s) with a total balance of $${totalBalance.toFixed(2)}.
+- You have ${accounts.length} account(s) with a total balance of $${totalBalance.toFixed(
+      2
+    )}.
 - Your monthly expenses total $${monthlyExpense.toFixed(2)}.
-- ${budgets[0] ? `Your set budget is $${budgets[0].amount}.` : "You have not set a budget."}
-- Your highest spending is on "${topCategory}" with $${topCategoryAmount.toFixed(2)} spent this month.
+- ${
+      budgets[0]
+        ? `Your set budget is $${budgets[0].amount}.`
+        : "You have not set a budget."
+    }
+- Your highest spending is on "${topCategory}" with $${topCategoryAmount.toFixed(
+      2
+    )} spent this month.
 Please provide one-sentence insight that compares these aspects and offers strategies to optimize your investments, savings, and spending habits. Give full answer in a single line.`;
   }, [accounts, totalBalance, monthlyExpense, budgets, topCategory, topCategoryAmount]);
 
   // ========= BUDGET HANDLERS ============
-  const handleBudgetCreate = useCallback(async (e) => {
-    e.preventDefault();
-    setError("");
-    if (!budgetAmount || isNaN(budgetAmount) || parseFloat(budgetAmount) <= 0) {
-      setError("Invalid budget amount.");
-      return;
-    }
-    try {
-      const newBudget = await createBudget(token, { amount: parseFloat(budgetAmount) });
-      setBudgets([newBudget]);
-      setBudgetAmount("");
-    } catch (err) {
-      console.error("Error creating budget:", err.message);
-      setError("Failed to create budget. Try again.");
-    }
-  }, [token, budgetAmount]);
+  const handleBudgetCreate = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setError("");
+      if (!budgetAmount || isNaN(budgetAmount) || parseFloat(budgetAmount) <= 0) {
+        setError("Invalid budget amount.");
+        return;
+      }
+      try {
+        const newBudget = await createBudget(token, {
+          amount: parseFloat(budgetAmount),
+        });
+        setBudgets([newBudget]);
+        setBudgetAmount("");
+      } catch (err) {
+        console.error("Error creating budget:", err.message);
+        setError("Failed to create budget. Try again.");
+      }
+    },
+    [token, budgetAmount]
+  );
 
-  const handleBudgetUpdate = useCallback(async (e) => {
-    e.preventDefault();
-    setError("");
-    if (!budgetAmount || isNaN(budgetAmount) || parseFloat(budgetAmount) <= 0) {
-      setError("Invalid budget amount.");
-      return;
-    }
-    try {
-      const updated = await updateBudget(token, budgets[0].id, { amount: parseFloat(budgetAmount) });
-      setBudgets([updated]);
-      setBudgetAmount("");
-    } catch (err) {
-      console.error("Error updating budget:", err.message);
-      setError("Failed to update budget. Try again.");
-    }
-  }, [token, budgetAmount, budgets]);
+  const handleBudgetUpdate = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setError("");
+      if (!budgetAmount || isNaN(budgetAmount) || parseFloat(budgetAmount) <= 0) {
+        setError("Invalid budget amount.");
+        return;
+      }
+      try {
+        const updated = await updateBudget(token, budgets[0].id, {
+          amount: parseFloat(budgetAmount),
+        });
+        setBudgets([updated]);
+        setBudgetAmount("");
+      } catch (err) {
+        console.error("Error updating budget:", err.message);
+        setError("Failed to update budget. Try again.");
+      }
+    },
+    [token, budgetAmount, budgets]
+  );
 
   const handleBudgetDelete = useCallback(async () => {
     setError("");
@@ -251,20 +347,25 @@ Please provide one-sentence insight that compares these aspects and offers strat
     }
   }, [token, budgets]);
 
-  const handleDelete = useCallback(async (id) => {
-    try {
-      await deleteTransaction(token, id);
-      fetchData();
-    } catch (err) {
-      console.error("Error deleting transaction:", err.message);
-      setError("Failed to delete transaction.");
-    }
-  }, [token, fetchData]);
+  const handleDelete = useCallback(
+    async (id) => {
+      try {
+        await deleteTransaction(token, id);
+        fetchData();
+      } catch (err) {
+        console.error("Error deleting transaction:", err.message);
+        setError("Failed to delete transaction.");
+      }
+    },
+    [token, fetchData]
+  );
 
   // ========= Helper for Progress Bar ============
   const getProgressColor = useCallback(() => {
-    if (monthlyExpense / (budgets[0]?.amount || 1) < 0.5) return "bg-green-500";
-    if (monthlyExpense / (budgets[0]?.amount || 1) < 0.8) return "bg-yellow-500";
+    if (monthlyExpense / (budgets[0]?.amount || 1) < 0.5)
+      return "bg-green-500";
+    if (monthlyExpense / (budgets[0]?.amount || 1) < 0.8)
+      return "bg-yellow-500";
     return "bg-red-500";
   }, [monthlyExpense, budgets]);
 
@@ -363,7 +464,13 @@ Please provide one-sentence insight that compares these aspects and offers strat
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
           className="w-40 h-40 glass-container rounded-2xl p-4 shadow-2xl flex justify-center items-center"
         >
-          <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false }} />
+          <Doughnut
+            data={doughnutData}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+            }}
+          />
         </motion.div>
 
         <motion.div
@@ -402,7 +509,9 @@ Please provide one-sentence insight that compares these aspects and offers strat
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
               className="glass-container rounded-2xl p-8 shadow-2xl"
             >
-              <h2 className="text-xl font-bold mb-4 text-cyan-400">Monthly Budget Tracker</h2>
+              <h2 className="text-xl font-bold mb-4 text-cyan-400">
+                Monthly Budget Tracker
+              </h2>
               {budgets[0] ? (
                 <>
                   <p className="mb-2 text-slate-700 dark:text-gray-300">
@@ -411,15 +520,25 @@ Please provide one-sentence insight that compares these aspects and offers strat
                   </p>
                   <p className="mb-2 text-slate-700 dark:text-gray-300">
                     <span className="font-semibold">Spent (This Month):</span>{" "}
-                    <span className="text-red-500">{`$${monthlyExpense.toFixed(2)}`}</span>
+                    <span className="text-red-500">{`$${monthlyExpense.toFixed(
+                      2
+                    )}`}</span>
                   </p>
                   <div className="relative w-full h-4 bg-gray-300 rounded-full overflow-hidden">
                     <div
                       className={`absolute h-full ${getProgressColor()}`}
-                      style={{ width: `${Math.min(monthlyExpense / (budgets[0]?.amount || 1) * 100, 100)}%` }}
+                      style={{
+                        width: `${Math.min(
+                          (monthlyExpense / (budgets[0]?.amount || 1)) * 100,
+                          100
+                        )}%`,
+                      }}
                     />
                   </div>
-                  <form onSubmit={handleBudgetUpdate} className="mt-4 flex flex-wrap gap-3">
+                  <form
+                    onSubmit={handleBudgetUpdate}
+                    className="mt-4 flex flex-wrap gap-3"
+                  >
                     <input
                       type="number"
                       className="glass-input w-24"
@@ -446,7 +565,10 @@ Please provide one-sentence insight that compares these aspects and offers strat
                   </form>
                 </>
               ) : (
-                <form onSubmit={handleBudgetCreate} className="space-y-3">
+                <form
+                  onSubmit={handleBudgetCreate}
+                  className="space-y-3"
+                >
                   <p className="text-slate-700 dark:text-gray-300">
                     No budget set yet. Create one below:
                   </p>
@@ -495,36 +617,23 @@ Please provide one-sentence insight that compares these aspects and offers strat
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.5 }}
             className="glass-container rounded-2xl p-8 shadow-2xl overflow-y-auto max-h-[600px]"
           >
-            <h2 className="text-xl font-bold mb-4 text-cyan-400">All Transactions</h2>
+            <h2 className="text-xl font-bold mb-4 text-cyan-400">
+              All Transactions
+            </h2>
             <div className="space-y-4">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((tx, idx) => (
-                  <motion.div
+                  <TransactionItem
                     key={tx.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut", delay: idx * 0.1 }}
-                    className="glass-container p-4 rounded-md hover:shadow-lg transition-shadow"
-                  >
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                      <span className="font-semibold text-lg text-cyan-400">
-                        {tx.type} - <span className="text-indigo-600">${parseFloat(tx.amount).toFixed(2)}</span>
-                      </span>
-                      <button
-                        className="mt-2 sm:mt-0 text-red-500 hover:text-red-600 font-bold transition-colors"
-                        onClick={() => handleDelete(tx.id)}
-                        aria-label="Delete Transaction"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                    <div className="text-sm text-slate-700 dark:text-gray-300 mt-2">
-                      {new Date(tx.date).toLocaleDateString()} | {tx.category} | {tx.description}
-                    </div>
-                  </motion.div>
+                    tx={tx}
+                    idx={idx}
+                    onDelete={handleDelete}
+                  />
                 ))
               ) : (
-                <p className="text-center text-gray-500">No transactions found.</p>
+                <p className="text-center text-gray-500">
+                  No transactions found.
+                </p>
               )}
             </div>
           </motion.div>

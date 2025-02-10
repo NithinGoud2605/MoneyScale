@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, { useEffect, useState, useContext, useRef, useMemo, useCallback } from "react";
 import { getAccounts, createAccount, deleteAccount } from "../services/accountService";
 import { getTransactions } from "../services/transactionService";
 import { AuthContext } from "../context/AuthContext";
@@ -9,18 +9,16 @@ const Accounts = () => {
   const { token } = useContext(AuthContext);
   const { theme } = useTheme();
 
-  // State for accounts, transactions, form data, and error message
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [form, setForm] = useState({ name: "", type: "CURRENT", balance: 0 });
   const [error, setError] = useState("");
 
-  // Refs for animation
   const containerRef = useRef(null);
   const cardsRef = useRef([]);
 
-  // Combined data fetch function
-  const fetchData = async () => {
+  // Combined data fetch function wrapped in useCallback
+  const fetchData = useCallback(async () => {
     try {
       const [accountsData, transactionsData] = await Promise.all([
         getAccounts(token),
@@ -32,15 +30,15 @@ const Accounts = () => {
       console.error("Error fetching accounts:", err);
       setError("Failed to fetch accounts.");
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) {
       fetchData();
     }
-  }, [token]);
+  }, [token, fetchData]);
 
-  // Animate the container (on mount)
+  // Animate the container on mount
   useEffect(() => {
     if (containerRef.current) {
       gsap.fromTo(
@@ -63,34 +61,40 @@ const Accounts = () => {
   }, [accounts]);
 
   // Handler to create a new account
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    setError("");
-    try {
-      await createAccount(token, { ...form, balance: parseFloat(form.balance) });
-      setForm({ name: "", type: "CURRENT", balance: 0 });
-      fetchData();
-    } catch (err) {
-      console.error("Error creating account:", err);
-      setError("Failed to create account.");
-    }
-  };
+  const handleCreate = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setError("");
+      try {
+        await createAccount(token, { ...form, balance: parseFloat(form.balance) });
+        setForm({ name: "", type: "CURRENT", balance: 0 });
+        fetchData();
+      } catch (err) {
+        console.error("Error creating account:", err);
+        setError("Failed to create account.");
+      }
+    },
+    [token, form, fetchData]
+  );
 
   // Handler to delete an account
-  const handleDelete = async (id) => {
-    try {
-      await deleteAccount(token, id);
-      fetchData();
-    } catch (err) {
-      console.error("Error deleting account:", err);
-      setError("Failed to delete account.");
-    }
-  };
+  const handleDelete = useCallback(
+    async (id) => {
+      try {
+        await deleteAccount(token, id);
+        fetchData();
+      } catch (err) {
+        console.error("Error deleting account:", err);
+        setError("Failed to delete account.");
+      }
+    },
+    [token, fetchData]
+  );
 
-  // Calculate total balance across accounts
-  const totalBalance = accounts
-    .reduce((sum, acc) => sum + parseFloat(acc.balance), 0)
-    .toFixed(2);
+  // Calculate total balance and memoize it
+  const totalBalance = useMemo(() => {
+    return accounts.reduce((sum, acc) => sum + parseFloat(acc.balance), 0).toFixed(2);
+  }, [accounts]);
 
   return (
     <div
@@ -235,8 +239,6 @@ const Accounts = () => {
           </div>
         </div>
       </div>
-  
-      
     </div>
   );
 };

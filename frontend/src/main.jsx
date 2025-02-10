@@ -5,6 +5,7 @@ import { ThemeProvider } from "./theme/ThemeProvider";
 import "./index.css";
 import "./App.css";
 
+// Lazy-load App component.
 const App = lazy(() => import("./App"));
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
