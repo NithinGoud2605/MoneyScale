@@ -23,6 +23,9 @@ const budgetRoutes = require("./routes/budgetRoutes");
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/budgets", budgetRoutes);
 
+const geminiRoutes = require("./routes/geminiRoutes");
+app.use("/api", geminiRoutes);
+
 // Serve static files from the React app in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "frontend", "dist")));

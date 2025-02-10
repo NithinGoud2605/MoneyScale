@@ -9,8 +9,13 @@ import Register from "./sections/Register";
 import Accounts from "./sections/Accounts";
 import Transactions from "./sections/Transactions";
 import ProtectedRoute from "./components/ProtectedRoute";
+import GeminiBot from "./components/GeminiBot";
 
 const App = () => {
+  // You can later customize this prompt per page or based on user data.
+  const defaultPrompt =
+    "Explain how AI works and provide a fun, personalized financial tip based on user data.";
+
   return (
     <Router>
       {/* Outer container with a continuous background */}
@@ -50,6 +55,8 @@ const App = () => {
           </Suspense>
         </main>
         <Footer />
+        {/* Gemini Bot Floating Widget */}
+        <GeminiBot customPrompt={defaultPrompt} />
       </div>
     </Router>
   );
