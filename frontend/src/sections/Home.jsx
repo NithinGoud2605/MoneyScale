@@ -1,38 +1,23 @@
-import React, { useRef, useEffect } from "react";
-import gsap from "gsap";
+import React, { useRef, useContext } from "react";
 import { useTheme } from "../theme/ThemeProvider";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import InsightBanner from "../components/InsightBanner";
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
 const Home = () => {
   const heroRef = useRef(null);
   const featuresRef = useRef(null);
   const { theme } = useTheme();
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext); // Get user from AuthContext
 
-  useEffect(() => {
-    console.log("Hero container:", heroRef.current);
-    // Temporarily disable GSAP animation to check rendering.
-    // Uncomment the code below once the button is visible.
-    /*
-    const tl = gsap.timeline();
-    tl.from(heroRef.current.querySelectorAll(".hero-element"), {
-      duration: 0.8,
-      y: 30,
-      opacity: 0,
-      stagger: 0.2,
-      ease: "power3.out",
-    }).from(
-      featuresRef.current.querySelectorAll(".feature-card"),
-      {
-        duration: 0.6,
-        y: 20,
-        opacity: 0,
-        stagger: 0.1,
-        ease: "back.out(1.7)",
-      },
-      "-=0.5"
-    );
-    */
-  }, []);
+  const handleGetStarted = () => {
+    if (user) {
+      navigate("/overview");
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
     <div
@@ -49,13 +34,12 @@ const Home = () => {
         <p className="hero-element text-xl md:text-2xl text-slate-600 dark:text-gray-300">
           Smart budgeting, expense tracking, and financial insights – all in one beautiful platform
         </p>
-        {/* Debug button style: solid red background and border */}
-        <Link
-          to="/register"
+        <button
+          onClick={handleGetStarted}
           className="hero-element inline-block px-8 py-4 text-lg font-semibold text-white rounded-full hover:opacity-90 transition-opacity shadow-xl z-10 bg-blue-500 border border-black"
         >
           Get Started
-        </Link>
+        </button>
       </div>
 
       <div
@@ -64,12 +48,7 @@ const Home = () => {
       >
         <div className="feature-card bg-card backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-border hover:-translate-y-2 transition-transform">
           <div className="mb-6 p-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl w-max mx-auto">
-            <svg
-              className="w-12 h-12 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+            <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -86,12 +65,7 @@ const Home = () => {
 
         <div className="feature-card bg-card backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-border hover:-translate-y-2 transition-transform">
           <div className="mb-6 p-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl w-max mx-auto">
-            <svg
-              className="w-12 h-12 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+            <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -108,12 +82,7 @@ const Home = () => {
 
         <div className="feature-card bg-card backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-border hover:-translate-y-2 transition-transform">
           <div className="mb-6 p-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl w-max mx-auto">
-            <svg
-              className="w-12 h-12 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+            <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -128,6 +97,9 @@ const Home = () => {
           </p>
         </div>
       </div>
+
+      {/* Render the InsightBanner with the custom prompt */}
+      <InsightBanner customPrompt="Provide one concise sentence of financial advice for new visitors to our finance portal." />
     </div>
   );
 };

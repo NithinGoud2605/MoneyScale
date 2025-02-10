@@ -3,7 +3,6 @@ const express = require("express");
 const axios = require("axios");
 const router = express.Router();
 
-// Use your Gemini API key stored in your .env file
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 router.post("/gemini", async (req, res) => {
@@ -20,21 +19,35 @@ router.post("/gemini", async (req, res) => {
             parts: [{ text: prompt }],
           },
         ],
+        // Optionally, add additional parameters if needed:
+        // store: true,
       },
       {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
-    // Assuming the Gemini API returns content inside the first candidate’s "content" field.
-    const generatedContent =
+    
+    // Log the entire response for debugging
+    console.log("Gemini API response:", response.data);
+    
+    let generatedContent = "No content generated.";
+    // Adjust the extraction logic based on the actual response structure.
+    if (
       response.data &&
       response.data.candidates &&
       response.data.candidates[0] &&
       response.data.candidates[0].content
-        ? response.data.candidates[0].content
-        : "No content generated.";
+    ) {
+      const content = response.data.candidates[0].content;
+      if (typeof content === "string") {
+        generatedContent = content;
+      } else if (content.parts && Array.isArray(content.parts)) {
+        generatedContent = content.parts.map((part) => part.text).join(" ");
+      } else {
+        generatedContent = JSON.stringify(content);
+      }
+    }
+    
     res.json({ message: generatedContent });
   } catch (error) {
     console.error(

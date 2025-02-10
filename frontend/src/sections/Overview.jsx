@@ -1,16 +1,21 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import React, { useEffect, useState, useContext, useMemo, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Doughnut } from "react-chartjs-2";
 import { Chart, registerables } from "chart.js";
-import ReactECharts from "echarts-for-react";
 import { AuthContext } from "../context/AuthContext";
-import { getBudgets, createBudget, updateBudget, deleteBudget } from "../services/budgetService";
+import {
+  getBudgets,
+  createBudget,
+  updateBudget,
+  deleteBudget,
+} from "../services/budgetService";
 import { getTransactions, deleteTransaction } from "../services/transactionService";
 import { getAccounts } from "../services/accountService";
 import CreateTransactionModal from "../components/CreateTransactionModal";
-import gsap from "gsap";
 import { useTheme } from "../theme/ThemeProvider";
 import { useNavigate } from "react-router-dom";
-import ChartSwitcher from "../components/ChartSwitcher"; // Import the new component
+import ChartSwitcher from "../components/ChartSwitcher";
+import CombinedInsightBanner from "../components/CombinedInsightBanner";
 
 Chart.register(...registerables);
 
@@ -24,31 +29,52 @@ const Overview = () => {
   const [accounts, setAccounts] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
-
-  // Budget form state
   const [budgetAmount, setBudgetAmount] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-
-  // Chart view state: use string values "Bar", "Daily", "Pie"
   const [chartView, setChartView] = useState("Bar");
 
-  // Refs for GSAP animations
-  const barChartRef = useRef(null);
-  const chartContainerRef = useRef(null);
-  const doughnutChartRef = useRef(null);
-  const budgetRef = useRef(null);
-  const transactionListRef = useRef(null);
-  const cardRefs = useRef([]);
+  // Define current date variables so they can be used in memoized calculations
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
 
-  // Common Chart Options for Chart.js charts
-  const getChartOptions = () => ({
+  // ========= FETCH DATA ============
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [txRes, accRes, budRes] = await Promise.all([
+        getTransactions(token),
+        getAccounts(token),
+        getBudgets(token),
+      ]);
+      setTransactions(txRes || []);
+      setAccounts(accRes || []);
+      setBudgets(budRes || []);
+      setSelectedAccount(accRes[0]?.id || null);
+      setError("");
+    } catch (err) {
+      console.error("Error fetching data:", err.message);
+      setError("Failed to fetch data. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchData();
+    }
+  }, [token, fetchData]);
+
+  // ========= COMMON CHART OPTIONS ============
+  const getChartOptions = useCallback(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         labels: {
-          color: theme === "light" ? "#1e293b" : "#f8fafc", // slate-800 for light mode
+          color: theme === "light" ? "#1e293b" : "#f8fafc",
           font: { family: "Inter, sans-serif", size: 14 },
         },
       },
@@ -70,95 +96,67 @@ const Overview = () => {
         ticks: { color: theme === "light" ? "#475569" : "#94a3b8" },
       },
     },
-  });
+  }), [theme]);
 
-  // ========= FETCH DATA ============
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [txRes, accRes, budRes] = await Promise.all([
-        getTransactions(token),
-        getAccounts(token),
-        getBudgets(token),
-      ]);
-      setTransactions(txRes || []);
-      setAccounts(accRes || []);
-      setBudgets(budRes || []);
-      setSelectedAccount(accRes[0]?.id || null);
-      setError("");
-    } catch (err) {
-      console.error("Error fetching data:", err.message);
-      setError("Failed to fetch data. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ========= COMPUTED VALUES WITH useMemo ============
+  const totalBalance = useMemo(() => {
+    return accounts.reduce((sum, acc) => sum + parseFloat(acc.balance), 0);
+  }, [accounts]);
 
-  useEffect(() => {
-    if (token) {
-      fetchData();
-    }
-  }, [token]);
-
-  // ========= DAILY EXPENSES CHART ============
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const dailyExpenses = Array(daysInMonth).fill(0);
-  transactions.forEach((tx) => {
-    if (tx.type === "EXPENSE") {
-      const txDate = new Date(tx.date);
-      if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
-        const day = txDate.getDate();
-        dailyExpenses[day - 1] += parseFloat(tx.amount);
+  const dailyData = useMemo(() => {
+    const days = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const expenses = Array(days).fill(0);
+    transactions.forEach((tx) => {
+      if (tx.type === "EXPENSE") {
+        const txDate = new Date(tx.date);
+        if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+          expenses[txDate.getDate() - 1] += parseFloat(tx.amount);
+        }
       }
-    }
-  });
-  const dailyLabels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const dailyData = {
-    labels: dailyLabels,
-    datasets: [
-      {
+    });
+    return {
+      labels: Array.from({ length: days }, (_, i) => i + 1),
+      datasets: [{
         label: "Daily Expenses",
-        data: dailyExpenses.map((val) => parseFloat(val.toFixed(2))),
+        data: expenses.map(val => parseFloat(val.toFixed(2))),
         borderColor: "#f97316",
         backgroundColor: "#f97316",
         fill: false,
-      },
-    ],
-  };
+      }],
+    };
+  }, [transactions, currentMonth, currentYear]);
 
-  // ========= EXPENSES BY CATEGORY (Bar Chart) ============
-  const expenseTransactions = transactions.filter((tx) => tx.type === "EXPENSE");
-  const categoryTotals = expenseTransactions.reduce((acc, tx) => {
-    const cat = tx.category ? tx.category.trim() : "Unknown";
-    const amt = parseFloat(tx.amount);
-    acc[cat] = (acc[cat] || 0) + amt;
-    return acc;
-  }, {});
-  const barData = {
+  const categoryTotals = useMemo(() => {
+    return transactions.filter(tx => tx.type === "EXPENSE").reduce((acc, tx) => {
+      const cat = tx.category ? tx.category.trim() : "Unknown";
+      const amt = parseFloat(tx.amount);
+      acc[cat] = (acc[cat] || 0) + amt;
+      return acc;
+    }, {});
+  }, [transactions]);
+
+  const barData = useMemo(() => ({
     labels: Object.keys(categoryTotals),
-    datasets: [
-      {
-        label: "Expenses by Category",
-        data: Object.values(categoryTotals).map((val) => parseFloat(val.toFixed(2))),
-        backgroundColor: Object.keys(categoryTotals).map((_, i) =>
-          ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6]
-        ),
-      },
-    ],
-  };
+    datasets: [{
+      label: "Expenses by Category",
+      data: Object.values(categoryTotals).map(val => parseFloat(val.toFixed(2))),
+      backgroundColor: Object.keys(categoryTotals).map((_, i) =>
+        ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6]
+      ),
+    }],
+  }), [categoryTotals]);
 
-  // ========= ECharts Pie Chart Data ============
-  const echartsData = Object.keys(categoryTotals).map((cat, i) => ({
-    name: cat,
-    value: parseFloat(categoryTotals[cat].toFixed(2)),
-    itemStyle: {
-      color: ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6],
-    },
-  }));
-  const echartsOptions = {
+  const echartsData = useMemo(() => (
+    Object.keys(categoryTotals).map((cat, i) => ({
+      name: cat,
+      value: parseFloat(categoryTotals[cat].toFixed(2)),
+      itemStyle: {
+        color: ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6],
+      },
+    }))
+  ), [categoryTotals]);
+
+  const echartsOptions = useMemo(() => ({
     tooltip: { trigger: "item", formatter: "{b}: ${c} ({d}%)" },
     series: [
       {
@@ -169,59 +167,45 @@ const Overview = () => {
         emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: "rgba(0,0,0,0.5)" } },
       },
     ],
-  };
+  }), [echartsData]);
 
-  // ========= DOUGHNUT CHART DATA (Account Balances) ============
-  const doughnutData = {
-    labels: accounts.map((acc) => acc.name),
-    datasets: [
-      {
-        label: "Balances",
-        data: accounts.map((acc) => parseFloat(acc.balance).toFixed(2)),
-        backgroundColor: accounts.map((_, i) =>
-          ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6]
-        ),
-      },
-    ],
-  };
+  const doughnutData = useMemo(() => ({
+    labels: accounts.map(acc => acc.name),
+    datasets: [{
+      label: "Balances",
+      data: accounts.map(acc => parseFloat(acc.balance).toFixed(2)),
+      backgroundColor: accounts.map((_, i) =>
+        ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"][i % 6]
+      ),
+    }],
+  }), [accounts]);
 
-  // ========= GSAP ANIMATIONS ============
-  useEffect(() => {
-    if (!loading) {
-      const tl = gsap.timeline({ defaults: { duration: 1, ease: "power3.out" } });
-      tl.fromTo(chartContainerRef.current, { opacity: 0, x: 50 }, { opacity: 1, x: 0 })
-        .fromTo(doughnutChartRef.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0 }, "-=0.7")
-        .fromTo(budgetRef.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0 }, "-=0.7")
-        .fromTo(transactionListRef.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0 }, "-=0.7");
-      if (cardRefs.current.length) {
-        gsap.fromTo(
-          cardRefs.current,
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, stagger: 0.15, duration: 0.8, ease: "power3.out" }
-        );
-      }
-    }
-  }, [loading, accounts]);
+  const monthlyExpense = useMemo(() => {
+    return transactions.filter(tx =>
+      tx.type === "EXPENSE" &&
+      new Date(tx.date).getMonth() === currentMonth &&
+      new Date(tx.date).getFullYear() === currentYear
+    ).reduce((acc, tx) => acc + parseFloat(tx.amount), 0);
+  }, [transactions, currentMonth, currentYear]);
 
-  // ========= BUDGET LOGIC ============
-  const budget = budgets[0] || null;
-  const monthlyExpense = expenseTransactions
-    .filter(
-      (tx) =>
-        tx.type === "EXPENSE" &&
-        new Date(tx.date).getMonth() === currentMonth &&
-        new Date(tx.date).getFullYear() === currentYear
-    )
-    .reduce((acc, tx) => acc + parseFloat(tx.amount), 0);
-  const spentPercentage = budget ? (monthlyExpense / budget.amount) * 100 : 0;
-  const getProgressColor = () => {
-    if (spentPercentage < 50) return "bg-green-500";
-    if (spentPercentage < 80) return "bg-yellow-500";
-    return "bg-red-500";
-  };
+  const sortedCategories = useMemo(() => {
+    return Object.entries(categoryTotals).sort(([, a], [, b]) => b - a);
+  }, [categoryTotals]);
+
+  const topCategory = sortedCategories[0] ? sortedCategories[0][0] : "None";
+  const topCategoryAmount = sortedCategories[0] ? sortedCategories[0][1] : 0;
+
+  const combinedPrompt = useMemo(() => {
+    return `User Financial Overview:
+- You have ${accounts.length} account(s) with a total balance of $${totalBalance.toFixed(2)}.
+- Your monthly expenses total $${monthlyExpense.toFixed(2)}.
+- ${budgets[0] ? `Your set budget is $${budgets[0].amount}.` : "You have not set a budget."}
+- Your highest spending is on "${topCategory}" with $${topCategoryAmount.toFixed(2)} spent this month.
+Please provide one-sentence insight that compares these aspects and offers strategies to optimize your investments, savings, and spending habits. Give full answer in a single line.`;
+  }, [accounts, totalBalance, monthlyExpense, budgets, topCategory, topCategoryAmount]);
 
   // ========= BUDGET HANDLERS ============
-  const handleBudgetCreate = async (e) => {
+  const handleBudgetCreate = useCallback(async (e) => {
     e.preventDefault();
     setError("");
     if (!budgetAmount || isNaN(budgetAmount) || parseFloat(budgetAmount) <= 0) {
@@ -236,9 +220,9 @@ const Overview = () => {
       console.error("Error creating budget:", err.message);
       setError("Failed to create budget. Try again.");
     }
-  };
+  }, [token, budgetAmount]);
 
-  const handleBudgetUpdate = async (e) => {
+  const handleBudgetUpdate = useCallback(async (e) => {
     e.preventDefault();
     setError("");
     if (!budgetAmount || isNaN(budgetAmount) || parseFloat(budgetAmount) <= 0) {
@@ -246,29 +230,28 @@ const Overview = () => {
       return;
     }
     try {
-      const updated = await updateBudget(token, budget.id, { amount: parseFloat(budgetAmount) });
+      const updated = await updateBudget(token, budgets[0].id, { amount: parseFloat(budgetAmount) });
       setBudgets([updated]);
       setBudgetAmount("");
     } catch (err) {
       console.error("Error updating budget:", err.message);
       setError("Failed to update budget. Try again.");
     }
-  };
+  }, [token, budgetAmount, budgets]);
 
-  const handleBudgetDelete = async () => {
+  const handleBudgetDelete = useCallback(async () => {
     setError("");
     try {
-      await deleteBudget(token, budget.id);
+      await deleteBudget(token, budgets[0].id);
       setBudgets([]);
       setBudgetAmount("");
     } catch (err) {
       console.error("Error deleting budget:", err.message);
       setError("Failed to delete budget. Try again.");
     }
-  };
+  }, [token, budgets]);
 
-  // ========= TRANSACTION DELETE HANDLER ============
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     try {
       await deleteTransaction(token, id);
       fetchData();
@@ -276,11 +259,19 @@ const Overview = () => {
       console.error("Error deleting transaction:", err.message);
       setError("Failed to delete transaction.");
     }
-  };
+  }, [token, fetchData]);
 
-  // No filtering; using all transactions.
+  // ========= Helper for Progress Bar ============
+  const getProgressColor = useCallback(() => {
+    if (monthlyExpense / (budgets[0]?.amount || 1) < 0.5) return "bg-green-500";
+    if (monthlyExpense / (budgets[0]?.amount || 1) < 0.8) return "bg-yellow-500";
+    return "bg-red-500";
+  }, [monthlyExpense, budgets]);
+
+  // Define filteredTransactions (if you need filtering later)
   const filteredTransactions = transactions;
 
+  // ========= RENDER ============
   return (
     <div
       className={`p-6 min-h-screen transition-colors duration-300 ${
@@ -289,30 +280,62 @@ const Overview = () => {
           : "bg-gradient-to-br from-gray-900 to-blue-900 text-gray-100"
       }`}
     >
-      {/* Main header using same gradient as other pages */}
-      <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-600">
+      <motion.h1
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="text-4xl md:text-5xl font-extrabold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-600"
+      >
         Overview Dashboard
-      </h1>
+      </motion.h1>
 
-      {error && <div className="mb-4 text-center text-red-500">{error}</div>}
-
-      {/* Advisory Message if no accounts exist */}
-      {!loading && accounts.length === 0 && (
-        <div className="max-w-3xl mx-auto mb-8 p-4 glass-container text-center">
-          <p>
-            It looks like you haven't added any accounts yet. Please visit the{" "}
-            <span className="text-indigo-600 underline cursor-pointer" onClick={() => navigate("/accounts")}>
-              Accounts
-            </span>{" "}
-            section to create your first account. Once added, you'll be able to track transactions,
-            set budgets, and view insightful charts on your spending.
-          </p>
-        </div>
+      {error && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="mb-4 text-center text-red-500"
+        >
+          {error}
+        </motion.div>
       )}
 
-      {/* Top Controls Row */}
-      <div className="flex flex-wrap items-center mb-8 gap-6 justify-center">
-        {/* Account Selection */}
+      {!loading && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <CombinedInsightBanner customPrompt={combinedPrompt} />
+        </motion.div>
+      )}
+
+      {!loading && accounts.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-3xl mx-auto mb-8 p-4 glass-container text-center"
+        >
+          <p>
+            It looks like you haven't added any accounts yet. Please visit the{" "}
+            <span
+              className="text-indigo-600 underline cursor-pointer"
+              onClick={() => navigate("/accounts")}
+            >
+              Accounts
+            </span>{" "}
+            section to create your first account.
+          </p>
+        </motion.div>
+      )}
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+        className="flex flex-wrap items-center mb-8 gap-6 justify-center"
+      >
         <div className="glass-container p-4 rounded-2xl shadow-2xl">
           <label className="block mb-2 font-semibold text-slate-900 dark:text-gray-100">
             Select an Account
@@ -334,51 +357,68 @@ const Overview = () => {
           </select>
         </div>
 
-        {/* Doughnut Chart for Account Balances */}
-        <div
-          ref={doughnutChartRef}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
           className="w-40 h-40 glass-container rounded-2xl p-4 shadow-2xl flex justify-center items-center"
         >
           <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false }} />
-        </div>
+        </motion.div>
 
-        {/* Create Transaction Button */}
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
+        >
           <CreateTransactionModal
             accounts={accounts}
             onSuccess={fetchData}
             className="px-6 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
           />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {loading ? (
-        <div className="text-center text-gray-500">Loading...</div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center text-gray-500"
+        >
+          Loading...
+        </motion.div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT COLUMN (Charts & Budget Tracker) */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+        >
           <div className="lg:col-span-2 space-y-8">
-            {/* Budget Tracker Card */}
-            <div ref={budgetRef} className="glass-container rounded-2xl p-8 shadow-2xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
+              className="glass-container rounded-2xl p-8 shadow-2xl"
+            >
               <h2 className="text-xl font-bold mb-4 text-cyan-400">Monthly Budget Tracker</h2>
-              {budget ? (
+              {budgets[0] ? (
                 <>
                   <p className="mb-2 text-slate-700 dark:text-gray-300">
                     <span className="font-semibold">Budget:</span>{" "}
-                    <span className="text-blue-600">{`$${budget.amount}`}</span>
+                    <span className="text-blue-600">{`$${budgets[0].amount}`}</span>
                   </p>
                   <p className="mb-2 text-slate-700 dark:text-gray-300">
                     <span className="font-semibold">Spent (This Month):</span>{" "}
                     <span className="text-red-500">{`$${monthlyExpense.toFixed(2)}`}</span>
                   </p>
-                  {/* Progress Bar */}
                   <div className="relative w-full h-4 bg-gray-300 rounded-full overflow-hidden">
                     <div
                       className={`absolute h-full ${getProgressColor()}`}
-                      style={{ width: `${Math.min(spentPercentage, 100)}%` }}
+                      style={{ width: `${Math.min(monthlyExpense / (budgets[0]?.amount || 1) * 100, 100)}%` }}
                     />
                   </div>
-                  {/* Update / Delete Budget Forms */}
                   <form onSubmit={handleBudgetUpdate} className="mt-4 flex flex-wrap gap-3">
                     <input
                       type="number"
@@ -430,10 +470,14 @@ const Overview = () => {
                   </div>
                 </form>
               )}
-            </div>
+            </motion.div>
 
-            {/* Chart Card with ChartSwitcher */}
-            <div ref={chartContainerRef} className="glass-container rounded-2xl p-8 shadow-2xl relative">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
+              className="glass-container rounded-2xl p-8 shadow-2xl relative"
+            >
               <ChartSwitcher
                 chartView={chartView}
                 onChange={setChartView}
@@ -442,18 +486,24 @@ const Overview = () => {
                 echartsOptions={echartsOptions}
                 getChartOptions={getChartOptions}
               />
-            </div>
+            </motion.div>
           </div>
 
-          {/* RIGHT COLUMN (Transaction List) */}
-          <div ref={transactionListRef} className="glass-container rounded-2xl p-8 shadow-2xl overflow-y-auto max-h-[600px]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.5 }}
+            className="glass-container rounded-2xl p-8 shadow-2xl overflow-y-auto max-h-[600px]"
+          >
             <h2 className="text-xl font-bold mb-4 text-cyan-400">All Transactions</h2>
             <div className="space-y-4">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((tx, idx) => (
-                  <div
+                  <motion.div
                     key={tx.id}
-                    ref={(el) => (cardRefs.current[idx] = el)}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut", delay: idx * 0.1 }}
                     className="glass-container p-4 rounded-md hover:shadow-lg transition-shadow"
                   >
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
@@ -471,14 +521,14 @@ const Overview = () => {
                     <div className="text-sm text-slate-700 dark:text-gray-300 mt-2">
                       {new Date(tx.date).toLocaleDateString()} | {tx.category} | {tx.description}
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               ) : (
                 <p className="text-center text-gray-500">No transactions found.</p>
               )}
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );
