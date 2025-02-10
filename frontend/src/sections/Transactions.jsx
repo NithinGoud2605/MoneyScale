@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useRef, useMemo, useCallback } from "react";
 import { getTransactions, createTransaction, deleteTransaction } from "../services/transactionService";
-import { getAccounts } from "../services/accountService";
+import { getAccounts, updateAccount } from "../services/accountService"; // Ensure this service exists
 import { AuthContext } from "../context/AuthContext";
 import gsap from "gsap";
 import { useTheme } from "../theme/ThemeProvider";
@@ -75,40 +75,109 @@ const Transactions = () => {
     async (e) => {
       e.preventDefault();
       setError("");
-      if (!form.amount || isNaN(form.amount) || parseFloat(form.amount) <= 0) {
+      
+      // Parse and validate the amount
+      const amountVal = parseFloat(form.amount);
+      if (!amountVal || isNaN(amountVal) || amountVal <= 0) {
         setError("Please enter a valid positive amount.");
         return;
       }
+      
       if (!form.accountId) {
         setError("Please select an account.");
         return;
       }
+      
+      // Find the selected account from the current accounts state
+      const selectedAcc = accounts.find((acc) => acc.id === form.accountId);
+      if (!selectedAcc) {
+        setError("Selected account not found.");
+        return;
+      }
+      
+      // Compute the new balance: add for INCOME, subtract for EXPENSE
+      const currentBalance = parseFloat(selectedAcc.balance);
+      const newBalance =
+        form.type === "INCOME" ? currentBalance + amountVal : currentBalance - amountVal;
+      
       try {
-        await createTransaction(token, { ...form, amount: parseFloat(form.amount) });
-        setForm({ type: "INCOME", amount: "", description: "", date: "", category: "", accountId: "" });
+        // Update the account balance first (ensure your updateAccount function accepts an object with a balance field)
+        await updateAccount(token, form.accountId, { balance: newBalance });
+        
+        // Create the transaction using the parsed amount
+        await createTransaction(token, { ...form, amount: amountVal });
+        
+        // Reset form fields
+        setForm({
+          type: "INCOME",
+          amount: "",
+          description: "",
+          date: "",
+          category: "",
+          accountId: ""
+        });
+        
+        // Refresh transactions and accounts data
         fetchTransactions();
+        fetchAccounts();
       } catch (err) {
         console.error("Error creating transaction:", err);
         setError("Failed to create transaction.");
       }
     },
-    [token, form, fetchTransactions]
+    [token, form, fetchTransactions, fetchAccounts, accounts]
   );
+  
 
   const handleDelete = useCallback(
     async (id) => {
+      // Locate the transaction to be deleted
+      const transactionToDelete = transactions.find((tx) => tx.id === id);
+      if (!transactionToDelete) return;
+  
+      const amount = parseFloat(transactionToDelete.amount);
+      const accountId = transactionToDelete.accountId;
+      
+      // For an expense, deleting it should add the amount back to the account.
+      // For an income, deleting it should subtract the amount.
+      const delta = transactionToDelete.type === "EXPENSE" ? amount : -amount;
+      
+      const message =
+        transactionToDelete.type === "EXPENSE"
+          ? `Deleting this expense transaction will add $${amount.toFixed(2)} back to the account. Do you want to proceed?`
+          : `Deleting this income transaction will remove $${amount.toFixed(2)} from the account balance. Do you want to proceed?`;
+  
+      if (!window.confirm(message)) return;
+  
       try {
+        // Find the corresponding account
+        const account = accounts.find((acc) => acc.id === accountId);
+        if (!account) {
+          setError("Account for this transaction was not found.");
+          return;
+        }
+        
+        // Compute the new balance using the delta
+        const newBalance = parseFloat(account.balance) + delta;
+        
+        // Update the account balance by passing an object with the new balance
+        await updateAccount(token, accountId, { balance: newBalance });
+        
+        // Then delete the transaction
         await deleteTransaction(token, id);
+        
+        // Refresh the transactions and accounts to reflect the changes
         fetchTransactions();
+        fetchAccounts();
       } catch (err) {
-        console.error("Error deleting transaction:", err);
-        setError("Failed to delete transaction.");
+        console.error("Error processing deletion:", err);
+        setError("Failed to delete transaction and update account balance.");
       }
     },
-    [token, fetchTransactions]
+    [token, transactions, fetchTransactions, fetchAccounts, accounts]
   );
+  
 
-  // Filter transactions based on search query, memoized for performance
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) =>
       tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||

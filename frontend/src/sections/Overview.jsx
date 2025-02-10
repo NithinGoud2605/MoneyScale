@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useState,
-  useContext,
-  useMemo,
-  useCallback,
-} from "react";
+import React, { useEffect, useState, useContext, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Doughnut } from "react-chartjs-2";
 import { Chart, registerables } from "chart.js";
@@ -16,7 +10,7 @@ import {
   deleteBudget,
 } from "../services/budgetService";
 import { getTransactions, deleteTransaction } from "../services/transactionService";
-import { getAccounts } from "../services/accountService";
+import { getAccounts, updateAccount } from "../services/accountService"; // updateAccount imported here
 import CreateTransactionModal from "../components/CreateTransactionModal";
 import { useTheme } from "../theme/ThemeProvider";
 import { useNavigate } from "react-router-dom";
@@ -25,10 +19,8 @@ import CombinedInsightBanner from "../components/CombinedInsightBanner";
 
 Chart.register(...registerables);
 
-// Define constant color palette outside the component to avoid re-creation
 const COLORS = ["#14b8a6", "#10b981", "#22c55e", "#2dd4bf", "#6366f1", "#f97316"];
 
-// Memoized TransactionItem component to prevent unnecessary re-renders
 const TransactionItem = React.memo(({ tx, idx, onDelete }) => (
   <motion.div
     key={tx.id}
@@ -39,10 +31,7 @@ const TransactionItem = React.memo(({ tx, idx, onDelete }) => (
   >
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
       <span className="font-semibold text-lg text-cyan-400">
-        {tx.type} -{" "}
-        <span className="text-indigo-600">
-          ${parseFloat(tx.amount).toFixed(2)}
-        </span>
+        {tx.type} - <span className="text-indigo-600">${parseFloat(tx.amount).toFixed(2)}</span>
       </span>
       <button
         className="mt-2 sm:mt-0 text-red-500 hover:text-red-600 font-bold transition-colors"
@@ -53,8 +42,7 @@ const TransactionItem = React.memo(({ tx, idx, onDelete }) => (
       </button>
     </div>
     <div className="text-sm text-slate-700 dark:text-gray-300 mt-2">
-      {new Date(tx.date).toLocaleDateString()} | {tx.category} |{" "}
-      {tx.description}
+      {new Date(tx.date).toLocaleDateString()} | {tx.category} | {tx.description}
     </div>
   </motion.div>
 ));
@@ -74,7 +62,6 @@ const Overview = () => {
   const [loading, setLoading] = useState(true);
   const [chartView, setChartView] = useState("Bar");
 
-  // Define current date variables for memoized calculations
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -107,7 +94,7 @@ const Overview = () => {
     }
   }, [token, fetchData]);
 
-  // ========= COMMON CHART OPTIONS ============
+  // ========= CHART OPTIONS ============
   const getChartOptions = useCallback(
     () => ({
       responsive: true,
@@ -141,7 +128,7 @@ const Overview = () => {
     [theme]
   );
 
-  // ========= COMPUTED VALUES WITH useMemo ============
+  // ========= COMPUTED VALUES ============
   const totalBalance = useMemo(() => {
     return accounts.reduce((sum, acc) => sum + parseFloat(acc.balance), 0);
   }, [accounts]);
@@ -243,12 +230,8 @@ const Overview = () => {
       datasets: [
         {
           label: "Balances",
-          data: accounts.map((acc) =>
-            parseFloat(acc.balance).toFixed(2)
-          ),
-          backgroundColor: accounts.map(
-            (_, i) => COLORS[i % COLORS.length]
-          ),
+          data: accounts.map((acc) => parseFloat(acc.balance).toFixed(2)),
+          backgroundColor: accounts.map((_, i) => COLORS[i % COLORS.length]),
         },
       ],
     }),
@@ -347,32 +330,59 @@ Please provide one-sentence insight that compares these aspects and offers strat
     }
   }, [token, budgets]);
 
+  // ========= TRANSACTION HANDLER ============
   const handleDelete = useCallback(
     async (id) => {
       try {
+        // 1) Get the transaction to delete
+        const transactionToDelete = transactions.find((tx) => tx.id === id);
+        console.log("transactionToDelete =>", transactionToDelete);
+        if (!transactionToDelete) {
+          throw new Error("Transaction not found in local state.");
+        }
+
+        // 2) Confirm with the user
+        const amount = parseFloat(transactionToDelete.amount);
+        const accountId = transactionToDelete.accountId;
+        const message =
+          transactionToDelete.type === "EXPENSE"
+            ? `Deleting this expense ($${amount.toFixed(2)}) will add the amount back.`
+            : `Deleting this income ($${amount.toFixed(2)}) will remove the amount.`;
+        if (!window.confirm(message)) {
+          return; // user canceled deletion
+        }
+
+        // 3) Find the corresponding account
+        const account = accounts.find((acc) => acc.id === accountId);
+        console.log("account =>", account);
+        if (!account) {
+          throw new Error("Account not found in local state.");
+        }
+
+        // 4) Compute the new balance based on transaction type
+        const delta = transactionToDelete.type === "EXPENSE" ? amount : -amount;
+        const newBalance = parseFloat(account.balance) + delta;
+        console.log("Updating account =>", accountId, "with =>", newBalance);
+
+        // 5) Update the account balance
+        await updateAccount(token, accountId, { balance: newBalance });
+
+        // 6) Delete the transaction
+        console.log("Deleting transaction =>", id);
         await deleteTransaction(token, id);
-        fetchData();
+
+        // 7) Refresh the data to update state
+        await fetchData();
       } catch (err) {
-        console.error("Error deleting transaction:", err.message);
-        setError("Failed to delete transaction.");
+        console.error("Detailed error =>", err);
+        setError("Failed to delete transaction and update account balance.");
       }
     },
-    [token, fetchData]
+    [token, transactions, accounts, fetchData]
   );
 
-  // ========= Helper for Progress Bar ============
-  const getProgressColor = useCallback(() => {
-    if (monthlyExpense / (budgets[0]?.amount || 1) < 0.5)
-      return "bg-green-500";
-    if (monthlyExpense / (budgets[0]?.amount || 1) < 0.8)
-      return "bg-yellow-500";
-    return "bg-red-500";
-  }, [monthlyExpense, budgets]);
+  const filteredTransactions = transactions; // Extend filtering logic if needed
 
-  // Define filteredTransactions (if you need filtering later)
-  const filteredTransactions = transactions;
-
-  // ========= RENDER ============
   return (
     <div
       className={`p-6 min-h-screen transition-colors duration-300 ${
@@ -520,13 +530,17 @@ Please provide one-sentence insight that compares these aspects and offers strat
                   </p>
                   <p className="mb-2 text-slate-700 dark:text-gray-300">
                     <span className="font-semibold">Spent (This Month):</span>{" "}
-                    <span className="text-red-500">{`$${monthlyExpense.toFixed(
-                      2
-                    )}`}</span>
+                    <span className="text-red-500">{`$${monthlyExpense.toFixed(2)}`}</span>
                   </p>
                   <div className="relative w-full h-4 bg-gray-300 rounded-full overflow-hidden">
                     <div
-                      className={`absolute h-full ${getProgressColor()}`}
+                      className={`absolute h-full ${
+                        monthlyExpense / (budgets[0]?.amount || 1) < 0.5
+                          ? "bg-green-500"
+                          : monthlyExpense / (budgets[0]?.amount || 1) < 0.8
+                          ? "bg-yellow-500"
+                          : "bg-red-500"
+                      }`}
                       style={{
                         width: `${Math.min(
                           (monthlyExpense / (budgets[0]?.amount || 1)) * 100,
@@ -565,10 +579,7 @@ Please provide one-sentence insight that compares these aspects and offers strat
                   </form>
                 </>
               ) : (
-                <form
-                  onSubmit={handleBudgetCreate}
-                  className="space-y-3"
-                >
+                <form onSubmit={handleBudgetCreate} className="space-y-3">
                   <p className="text-slate-700 dark:text-gray-300">
                     No budget set yet. Create one below:
                   </p>
@@ -623,17 +634,10 @@ Please provide one-sentence insight that compares these aspects and offers strat
             <div className="space-y-4">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((tx, idx) => (
-                  <TransactionItem
-                    key={tx.id}
-                    tx={tx}
-                    idx={idx}
-                    onDelete={handleDelete}
-                  />
+                  <TransactionItem key={tx.id} tx={tx} idx={idx} onDelete={handleDelete} />
                 ))
               ) : (
-                <p className="text-center text-gray-500">
-                  No transactions found.
-                </p>
+                <p className="text-center text-gray-500">No transactions found.</p>
               )}
             </div>
           </motion.div>

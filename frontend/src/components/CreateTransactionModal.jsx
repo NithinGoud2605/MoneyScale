@@ -40,28 +40,40 @@ const CreateTransactionModal = ({ accounts = [], onSuccess }) => {
     }
 
     try {
-      // Find the selected account
+      // Find the selected account from the accounts state
       const selectedAcc = accounts.find((acc) => acc.id === accountId);
       if (!selectedAcc) {
         setError("Invalid account selected.");
         return;
       }
       
-      // Convert the account balance to a number before doing any arithmetic.
-      let newBalance = parseFloat(selectedAcc.balance);
+      // Parse the current balance and amount to be added/subtracted
+      const currentBalance = parseFloat(selectedAcc.balance);
+      const transactionAmount = parseFloat(amount);
+      
+      // Compute the new balance based on transaction type
+      let newBalance;
       if (type === "INCOME") {
-        newBalance += parseFloat(amount);
+        newBalance = currentBalance + transactionAmount;
       } else {
-        newBalance -= parseFloat(amount);
+        newBalance = currentBalance - transactionAmount;
       }
-
-      // Update the account balance
+      
+      // Log values for debugging
+      console.log("Creating Transaction:");
+      console.log("Account ID:", accountId);
+      console.log("Current Balance:", currentBalance);
+      console.log("Transaction Type:", type);
+      console.log("Transaction Amount:", transactionAmount);
+      console.log("Computed New Balance:", newBalance);
+      
+      // Update the account balance. Adjust the payload if your backend expects a different field.
       await updateAccount(token, accountId, { balance: newBalance });
-
+      
       // Create the transaction
       await createTransaction(token, {
         type,
-        amount: parseFloat(amount),
+        amount: transactionAmount,
         description,
         date,
         category,

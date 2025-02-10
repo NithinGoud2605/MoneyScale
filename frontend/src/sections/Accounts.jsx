@@ -17,12 +17,12 @@ const Accounts = () => {
   const containerRef = useRef(null);
   const cardsRef = useRef([]);
 
-  // Combined data fetch function wrapped in useCallback
+  // Combined data fetch function
   const fetchData = useCallback(async () => {
     try {
       const [accountsData, transactionsData] = await Promise.all([
         getAccounts(token),
-        getTransactions(token)
+        getTransactions(token),
       ]);
       setAccounts(accountsData || []);
       setTransactions(transactionsData || []);
@@ -51,9 +51,11 @@ const Accounts = () => {
 
   // Animate each account card when accounts change
   useEffect(() => {
-    if (cardsRef.current.length > 0) {
+    // Filter out any null elements from cardsRef.current
+    const validCards = cardsRef.current.filter((card) => card !== null);
+    if (validCards.length > 0) {
       gsap.fromTo(
-        cardsRef.current,
+        validCards,
         { opacity: 0, y: 20 },
         { opacity: 1, y: 0, stagger: 0.15, duration: 0.8, ease: "back.out(1.7)" }
       );
@@ -137,9 +139,7 @@ const Accounts = () => {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
-                  <span className="input-icon"></span>
                 </div>
-  
                 <div className="glass-input-container">
                   <select
                     className="glass-input"
@@ -149,9 +149,7 @@ const Accounts = () => {
                     <option value="CURRENT">Current Account</option>
                     <option value="SAVINGS">Savings Account</option>
                   </select>
-                  <span className="input-icon"></span>
                 </div>
-  
                 <div className="glass-input-container">
                   <input
                     type="number"
@@ -160,9 +158,7 @@ const Accounts = () => {
                     value={form.balance}
                     onChange={(e) => setForm({ ...form, balance: e.target.value })}
                   />
-                  <span className="input-icon"></span>
                 </div>
-  
                 <button
                   type="submit"
                   className="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-700 text-white rounded-xl hover:shadow-2xl transition-all duration-300 font-semibold"
@@ -172,7 +168,7 @@ const Accounts = () => {
               </form>
             </div>
           </div>
-  
+
           {/* Accounts Grid */}
           <div className="lg:col-span-8 xl:col-span-9" ref={containerRef}>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -193,7 +189,6 @@ const Accounts = () => {
                         ${parseFloat(acc.balance).toFixed(2)}
                       </div>
                     </div>
-  
                     {/* Transaction Timeline */}
                     <div className="border-t border-cyan-500/20 pt-4">
                       <h4 className="text-sm font-semibold text-cyan-300 mb-3">Recent Activity</h4>
@@ -217,7 +212,6 @@ const Accounts = () => {
                           ))}
                       </div>
                     </div>
-  
                     {/* Delete Button */}
                     <button
                       onClick={() => handleDelete(acc.id)}
@@ -226,8 +220,7 @@ const Accounts = () => {
                     >
                       Delete Account
                     </button>
-  
-                    {/* Hover Effect Elements */}
+                    {/* Hover Effects */}
                     <div className="absolute inset-0 rounded-2xl border-2 border-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                   </div>
