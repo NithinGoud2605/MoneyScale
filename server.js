@@ -38,16 +38,18 @@ if (process.env.NODE_ENV === "production") {
 // Sync database models
 sequelize
   .authenticate()
-  .then(() => console.log("PostgreSQL connected"))
+  .then(() => {
+    console.log("PostgreSQL connected successfully");
+    return sequelize.sync({ alter: true });
+  })
+  .then(() => {
+    console.log("Database models synced");
+  })
   .catch((err) => {
     console.error("Unable to connect to PostgreSQL:", err);
-    process.exit(1);
+    console.log("Server will continue without database connection...");
+    // Don't exit the process, let it continue for development
   });
-
-sequelize
-  .sync({ alter: true })
-  .then(() => console.log("Database models synced"))
-  .catch((err) => console.error("Error syncing database models:", err));
 
 // Start the server
 const PORT = process.env.PORT || 5000;

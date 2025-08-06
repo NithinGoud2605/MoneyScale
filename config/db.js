@@ -8,11 +8,11 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST || 'db.your_supabase_project_ref.supabase.co',
     port: process.env.DB_PORT || 5432,
     dialect: "postgres",
-    logging: false, // Disable logging or set to console.log for debugging
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
     dialectOptions: {
       ssl: {
-        require: true,            // Enforce SSL connection
-        rejectUnauthorized: false // Disable verification of the certificate
+        require: true,
+        rejectUnauthorized: false
       }
     },
     pool: {
@@ -20,6 +20,10 @@ const sequelize = new Sequelize(
       min: 0,
       acquire: 30000,
       idle: 10000
+    },
+    retry: {
+      max: 3,
+      timeout: 10000
     }
   }
 );
