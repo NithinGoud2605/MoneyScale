@@ -60,3 +60,5 @@ const sequelize = new Sequelize(connectionString, {
   // Force IPv4 connections
   family: 4
 });
+
+module.exports = sequelize;
