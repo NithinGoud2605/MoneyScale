@@ -14,77 +14,49 @@ console.log("Database:", process.env.DB_NAME);
 console.log("User:", process.env.DB_USER);
 console.log("Port:", process.env.DB_PORT);
 
-// Try to resolve the hostname to IPv4 and use the IP directly
-const dns = require('dns');
-const util = require('util');
-const resolve4 = util.promisify(dns.resolve4);
+// Try using the DATABASE_URL environment variable first
+let connectionString;
 
-let sequelize;
-
-async function createConnection() {
-  try {
-    // Try to resolve the hostname to IPv4
-    const addresses = await resolve4(process.env.DB_HOST);
-    console.log(`✅ Hostname resolved to IPv4: ${addresses[0]}`);
-    
-    // Use the resolved IP address instead of hostname
-    const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${addresses[0]}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
-    console.log("Connection string with IP:", connectionString.replace(/:[^:@]*@/, ':****@'));
-    
-    sequelize = new Sequelize(connectionString, {
-      dialect: "postgres",
-      logging: process.env.NODE_ENV === 'development' ? console.log : false,
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false
-        }
-      },
-      pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-      },
-      retry: {
-        max: 3,
-        timeout: 10000
-      }
-    });
-  } catch (error) {
-    console.error(`❌ Cannot resolve hostname: ${process.env.DB_HOST}`);
-    console.error(`   Error: ${error.message}`);
-    console.log(`💡 Falling back to hostname connection...`);
-    
-    // Fallback to hostname connection
-    const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
-    console.log("Connection string with hostname:", connectionString.replace(/:[^:@]*@/, ':****@'));
-    
-    sequelize = new Sequelize(connectionString, {
-      dialect: "postgres",
-      logging: process.env.NODE_ENV === 'development' ? console.log : false,
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false
-        }
-      },
-      pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-      },
-      retry: {
-        max: 3,
-        timeout: 10000
-      },
-      family: 4
-    });
-  }
+if (process.env.DATABASE_URL) {
+  connectionString = process.env.DATABASE_URL;
+  console.log("Using DATABASE_URL environment variable");
+} else {
+  connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+  console.log("Using individual environment variables");
 }
 
-// Create the connection
-createConnection();
+console.log("Connection string:", connectionString.replace(/:[^:@]*@/, ':****@'));
 
-module.exports = sequelize;
+// Test DNS resolution
+dns.resolve4(process.env.DB_HOST, (err, addresses) => {
+  if (err) {
+    console.error(`❌ Cannot resolve hostname: ${process.env.DB_HOST}`);
+    console.error(`   Error: ${err.message}`);
+    console.log(`💡 Please check your Supabase connection settings`);
+  } else {
+    console.log(`✅ Hostname resolved to IPv4: ${addresses[0]}`);
+  }
+});
+
+const sequelize = new Sequelize(connectionString, {
+  dialect: "postgres",
+  logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  },
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  },
+  retry: {
+    max: 3,
+    timeout: 10000
+  },
+  // Force IPv4 connections
+  family: 4
+});

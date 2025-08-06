@@ -73,8 +73,18 @@ const dns = require('dns');
 dns.lookup(process.env.DB_HOST, { family: 4 }, (err, address, family) => {
   if (err) {
     console.error("DNS lookup failed:", err);
+    console.log("This suggests the hostname might be incorrect or there's a DNS issue");
   } else {
     console.log(`DNS resolved ${process.env.DB_HOST} to ${address} (IPv${family})`);
+  }
+});
+
+// Also test with IPv6 to see what we get
+dns.lookup(process.env.DB_HOST, { family: 6 }, (err, address, family) => {
+  if (err) {
+    console.error("IPv6 DNS lookup failed:", err);
+  } else {
+    console.log(`IPv6 DNS resolved ${process.env.DB_HOST} to ${address} (IPv${family})`);
   }
 });
 
