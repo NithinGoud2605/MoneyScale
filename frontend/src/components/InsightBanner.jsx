@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
+import { API_ENDPOINTS } from "../config/api";
 
 const InsightBanner = ({ customPrompt }) => {
   const [insight, setInsight] = useState("");
@@ -12,7 +13,7 @@ const InsightBanner = ({ customPrompt }) => {
       return;
     }
     try {
-      const response = await fetch("https://moneyscale.onrender.com/api/gemini", {
+      const response = await fetch(API_ENDPOINTS.GEMINI, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: customPrompt }),

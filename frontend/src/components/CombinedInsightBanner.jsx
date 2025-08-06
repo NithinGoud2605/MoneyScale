@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { API_ENDPOINTS } from "../config/api";
 
 const CombinedInsightBanner = ({ customPrompt, refreshInterval = 45000 }) => {
   const [insight, setInsight] = useState("");
@@ -10,7 +11,7 @@ const CombinedInsightBanner = ({ customPrompt, refreshInterval = 45000 }) => {
       return;
     }
     try {
-      const response = await fetch("https://moneyscale.onrender.com/api/gemini", {
+      const response = await fetch(API_ENDPOINTS.GEMINI, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: customPrompt }),

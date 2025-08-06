@@ -1,7 +1,9 @@
 import axios from "axios";
 
-// Use the Vite environment variable; if not defined, fallback to localhost (development)
-const API_URL = "https://moneyscale.onrender.com/api" || "http://localhost:5000/api";
+// Use local development server for development
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? "https://moneyscale.onrender.com/api" 
+  : "/api";
 
 export const getAccounts = async (token) => {
   try {

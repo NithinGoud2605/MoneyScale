@@ -1,8 +1,9 @@
 import axios from "axios";
 
-// Directly use the API endpoint from the environment variable if needed.
-// Alternatively, you can use the full path here if your auth routes are not behind the same proxy.
-const API_URL = "https://moneyscale.onrender.com/api" || "http://localhost:5000/api";
+// Use local development server for development
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? "https://moneyscale.onrender.com/api" 
+  : "/api";
 
 // Login function
 export const login = async (email, password) => {

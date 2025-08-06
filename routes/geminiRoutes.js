@@ -10,6 +10,13 @@ router.post("/gemini", async (req, res) => {
   if (!prompt) {
     return res.status(400).json({ error: "Prompt is required" });
   }
+  
+  // Check if API key is configured
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key_here') {
+    console.error("Gemini API key not configured");
+    return res.status(500).json({ error: "AI service not configured. Please set up GEMINI_API_KEY." });
+  }
+  
   try {
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,

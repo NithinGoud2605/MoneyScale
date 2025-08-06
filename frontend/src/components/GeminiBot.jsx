@@ -1,5 +1,6 @@
 // GeminiBot.js
 import React, { useState, useEffect } from "react";
+import { API_ENDPOINTS } from "../config/api";
 
 const GeminiBot = ({ customPrompt }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,7 +11,7 @@ const GeminiBot = ({ customPrompt }) => {
   const fetchGeminiContent = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/gemini", {
+      const response = await fetch(API_ENDPOINTS.GEMINI, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: customPrompt }),

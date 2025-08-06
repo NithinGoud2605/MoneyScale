@@ -7,6 +7,13 @@ export default defineConfig({
   server: {
     port: 3000, // Default development server port
     open: true, // Automatically open in browser
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   resolve: {
     alias: {
