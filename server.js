@@ -68,6 +68,16 @@ if (process.env.NODE_ENV === "production") {
 console.log("Attempting to connect to database...");
 console.log("Connection URL:", `postgresql://${process.env.DB_USER}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
 
+// Test DNS resolution
+const dns = require('dns');
+dns.lookup(process.env.DB_HOST, { family: 4 }, (err, address, family) => {
+  if (err) {
+    console.error("DNS lookup failed:", err);
+  } else {
+    console.log(`DNS resolved ${process.env.DB_HOST} to ${address} (IPv${family})`);
+  }
+});
+
 sequelize
   .authenticate()
   .then(() => {
