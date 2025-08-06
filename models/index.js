@@ -1,4 +1,6 @@
 const sequelize = require("../config/db");
+
+// Import models after sequelize is initialized
 const User = require("./User");
 const Account = require("./Account");
 const Transaction = require("./Transaction");

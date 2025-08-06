@@ -25,6 +25,13 @@ if (process.env.DATABASE_URL) {
   console.log("Using individual environment variables");
 }
 
+// Try using Supabase connection pooler (port 6543) instead of direct connection (port 5432)
+if (process.env.NODE_ENV === 'production') {
+  const poolerConnectionString = connectionString.replace(':5432/', ':6543/');
+  console.log("Trying connection pooler for production...");
+  connectionString = poolerConnectionString;
+}
+
 console.log("Connection string:", connectionString.replace(/:[^:@]*@/, ':****@'));
 
 // Test DNS resolution
@@ -38,6 +45,7 @@ dns.resolve4(process.env.DB_HOST, (err, addresses) => {
   }
 });
 
+// Create sequelize instance with connection pooler
 const sequelize = new Sequelize(connectionString, {
   dialect: "postgres",
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
@@ -60,5 +68,14 @@ const sequelize = new Sequelize(connectionString, {
   // Force IPv4 connections
   family: 4
 });
+
+// Test the connection to ensure it's working
+sequelize.authenticate()
+  .then(() => {
+    console.log("✅ Sequelize connection established successfully");
+  })
+  .catch((err) => {
+    console.error("❌ Sequelize connection failed:", err.message);
+  });
 
 module.exports = sequelize;

@@ -2,6 +2,10 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
+// Debug: Check if sequelize is properly imported
+console.log("User model - sequelize type:", typeof sequelize);
+console.log("User model - sequelize.define type:", typeof sequelize.define);
+
 const User = sequelize.define(
   "User",
   {
