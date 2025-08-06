@@ -32,6 +32,9 @@ if (process.env.NODE_ENV === 'production') {
   connectionString = poolerConnectionString;
 }
 
+// Use the correct Supabase connection format
+console.log("Using Supabase connection pooler format...");
+
 console.log("Connection string:", connectionString.replace(/:[^:@]*@/, ':****@'));
 
 // Test DNS resolution
@@ -66,7 +69,11 @@ const sequelize = new Sequelize(connectionString, {
     timeout: 10000
   },
   // Force IPv4 connections
-  family: 4
+  family: 4,
+  // Additional options for better connection handling
+  define: {
+    timestamps: true
+  }
 });
 
 // Test the connection to ensure it's working
