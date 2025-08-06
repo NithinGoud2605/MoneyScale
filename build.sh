@@ -11,7 +11,9 @@ npm install
 # Build frontend
 echo "🏗️ Building frontend..."
 cd frontend
-npm install
+echo "📦 Installing frontend dependencies..."
+npm install --production=false
+echo "🏗️ Building frontend application..."
 npm run build
 cd ..
 
