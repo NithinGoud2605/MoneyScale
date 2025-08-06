@@ -1,5 +1,12 @@
 const { Sequelize } = require("sequelize");
 
+// Log the database configuration for debugging
+console.log("Database Configuration:");
+console.log("Host:", process.env.DB_HOST);
+console.log("Database:", process.env.DB_NAME);
+console.log("User:", process.env.DB_USER);
+console.log("Port:", process.env.DB_PORT);
+
 const sequelize = new Sequelize(
   process.env.DB_NAME || 'postgres',
   process.env.DB_USER || 'postgres',

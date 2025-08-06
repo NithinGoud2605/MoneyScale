@@ -10,6 +10,35 @@ app.use(express.json());
 
 app.get("/api", (req, res) => res.send("API is running!"));
 
+// Test database connection endpoint
+app.get("/api/test-db", async (req, res) => {
+  try {
+    await sequelize.authenticate();
+    res.json({ 
+      status: "success", 
+      message: "Database connection successful",
+      config: {
+        host: process.env.DB_HOST,
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        port: process.env.DB_PORT
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: "error", 
+      message: "Database connection failed",
+      error: error.message,
+      config: {
+        host: process.env.DB_HOST,
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        port: process.env.DB_PORT
+      }
+    });
+  }
+});
+
 // Mount your API routes
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
@@ -36,6 +65,9 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // Sync database models
+console.log("Attempting to connect to database...");
+console.log("Connection URL:", `postgresql://${process.env.DB_USER}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
+
 sequelize
   .authenticate()
   .then(() => {
