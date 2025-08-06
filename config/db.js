@@ -25,18 +25,18 @@ if (process.env.DATABASE_URL) {
   console.log("Using individual environment variables");
 }
 
-// Try using Supabase connection pooler (port 6543) instead of direct connection (port 5432)
-if (process.env.NODE_ENV === 'production') {
-  const poolerConnectionString = connectionString.replace(':5432/', ':6543/');
-  console.log("Trying connection pooler for production...");
-  connectionString = poolerConnectionString;
-}
-
 // Try alternative hostname format - use project URL instead of db hostname
 if (process.env.NODE_ENV === 'production' && connectionString.includes('db.zikplbezatpwgoblbyso.supabase.co')) {
   const alternativeConnectionString = connectionString.replace('db.zikplbezatpwgoblbyso.supabase.co', 'zikplbezatpwgoblbyso.supabase.co');
   console.log("Trying alternative hostname format (project URL)...");
   connectionString = alternativeConnectionString;
+}
+
+// Try using direct connection (port 5432) instead of connection pooler for now
+if (process.env.NODE_ENV === 'production') {
+  const directConnectionString = connectionString.replace(':6543/', ':5432/');
+  console.log("Trying direct connection (port 5432)...");
+  connectionString = directConnectionString;
 }
 
 // Use the correct Supabase connection format
@@ -103,12 +103,14 @@ const sequelize = new Sequelize(connectionString, {
 });
 
 // Test the connection to ensure it's working
+console.log("🔍 Attempting to authenticate with Sequelize...");
 sequelize.authenticate()
   .then(() => {
     console.log("✅ Sequelize connection established successfully");
   })
   .catch((err) => {
     console.error("❌ Sequelize connection failed:", err.message);
+    console.error("Error details:", err);
   });
 
 module.exports = sequelize;
