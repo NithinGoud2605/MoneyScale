@@ -32,10 +32,33 @@ if (process.env.NODE_ENV === 'production') {
   connectionString = poolerConnectionString;
 }
 
+// Try alternative hostname format - use project URL instead of db hostname
+if (process.env.NODE_ENV === 'production' && connectionString.includes('db.zikplbezatpwgoblbyso.supabase.co')) {
+  const alternativeConnectionString = connectionString.replace('db.zikplbezatpwgoblbyso.supabase.co', 'zikplbezatpwgoblbyso.supabase.co');
+  console.log("Trying alternative hostname format (project URL)...");
+  connectionString = alternativeConnectionString;
+}
+
 // Use the correct Supabase connection format
 console.log("Using Supabase connection pooler format...");
 
 console.log("Connection string:", connectionString.replace(/:[^:@]*@/, ':****@'));
+
+// Extract hostname from connection string for debugging
+const hostnameMatch = connectionString.match(/@([^:]+):/);
+if (hostnameMatch) {
+  const hostname = hostnameMatch[1];
+  console.log("Using hostname:", hostname);
+  
+  // Test DNS resolution for this hostname
+  dns.resolve4(hostname, (err, addresses) => {
+    if (err) {
+      console.log(`❌ IPv4 resolution failed for ${hostname}: ${err.message}`);
+    } else {
+      console.log(`✅ IPv4 resolution successful for ${hostname}: ${addresses[0]}`);
+    }
+  });
+}
 
 // Test DNS resolution
 dns.resolve4(process.env.DB_HOST, (err, addresses) => {
