@@ -79,17 +79,20 @@ const sequelize = new Sequelize(connectionString, {
     ssl: {
       require: true,
       rejectUnauthorized: false
-    }
+    },
+    // Additional connection options for better compatibility
+    connectTimeout: 60000,
+    query_timeout: 60000
   },
   pool: {
     max: 5,
     min: 0,
-    acquire: 30000,
+    acquire: 60000, // Increased from 30000
     idle: 10000
   },
   retry: {
-    max: 3,
-    timeout: 10000
+    max: 5, // Increased from 3
+    timeout: 30000 // Increased from 10000
   },
   // Force IPv4 connections
   family: 4,
