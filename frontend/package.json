@@ -23,6 +23,7 @@
     "@radix-ui/themes": "^3.2.0",
     "@supabase/supabase-js": "^2.48.1",
     "@tanstack/react-table": "^8.20.6",
+    "@vitejs/plugin-react": "^4.3.4",
     "apexcharts": "^4.4.0",
     "axios": "^1.7.9",
     "body-parser": "^1.20.3",
@@ -50,6 +51,7 @@
     "sonner": "^1.7.2",
     "sqlite3": "^5.1.7",
     "victory": "^37.3.6",
+    "vite": "^6.0.5",
     "vite-plugin-mock": "^3.0.2"
   },
   "devDependencies": {
@@ -58,7 +60,6 @@
     "@tailwindcss/typography": "^0.5.16",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
-    "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.17.0",
     "eslint-plugin-react": "^7.37.2",
@@ -67,7 +68,6 @@
     "globals": "^15.14.0",
     "postcss": "^8.5.1",
     "prisma": "^6.2.1",
-    "tailwindcss": "^3.4.17",
-    "vite": "^6.0.5"
+    "tailwindcss": "^3.4.17"
   }
 }
